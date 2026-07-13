@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgentOS Observability Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #0b0f19;
+            --bg-surface: rgba(17, 24, 39, 0.7);
+            --bg-card: rgba(31, 41, 55, 0.45);
+            --border-glow: rgba(99, 102, 241, 0.15);
+            --color-primary: #6366f1;
+            --color-accent: #a855f7;
+            --color-success: #10b981;
+            --color-danger: #ef4444;
+            --color-warning: #f59e0b;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphism Header */
+        header {
+            background: rgba(11, 15, 25, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 1.25rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 2.25rem;
+            height: 2.25rem;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-family: 'Space Grotesk', sans-serif;
+            color: white;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .logo-text h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+        }
+
+        .logo-text span {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Dashboard Grid Layout */
+        main {
+            padding: 2rem;
+            max-width: 1600px;
+            width: 100%;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            flex-grow: 1;
+        }
+
+        /* Overview Metrics Cards */
+        .metric-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--color-primary);
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .metric-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #fff, var(--text-muted));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Section Panels */
+        .panel {
+            background: var(--bg-surface);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 1.25rem;
+            padding: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Task List Panel (Column 1-2) */
+        .tasks-panel {
+            grid-column: span 2;
+            grid-row: span 2;
+        }
+
+        .task-list {
+            list-style: none;
+            overflow-y: auto;
+            max-height: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .task-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .task-item:hover, .task-item.active {
+            background: rgba(99, 102, 241, 0.08);
+            border-color: rgba(99, 102, 241, 0.4);
+        }
+
+        .task-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .task-id {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .task-input {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 300px;
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .status-queued { background: rgba(245, 158, 11, 0.15); color: var(--color-warning); }
+        .status-scheduled { background: rgba(99, 102, 241, 0.15); color: var(--color-primary); }
+        .status-running { background: rgba(168, 85, 247, 0.15); color: var(--color-accent); animation: pulse 1.5s infinite; }
+        .status-completed { background: rgba(16, 185, 129, 0.15); color: var(--color-success); }
+        .status-failed { background: rgba(239, 68, 68, 0.15); color: var(--color-danger); }
+
+        /* Trace Inspector Panel (Column 3-4) */
+        .inspector-panel {
+            grid-column: span 2;
+            grid-row: span 2;
+        }
+
+        /* distributed trace span rendering */
+        .trace-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .trace-span {
+            position: relative;
+            padding-left: 1.75rem;
+            font-size: 0.9rem;
+        }
+
+        .trace-span::before {
+            content: '';
+            position: absolute;
+            left: 0.5rem;
+            top: 0;
+            bottom: -1rem;
+            width: 2px;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .trace-span:last-child::before {
+            display: none;
+        }
+
+        .trace-dot {
+            position: absolute;
+            left: 0.25rem;
+            top: 0.25rem;
+            width: 0.6rem;
+            height: 0.6rem;
+            border-radius: 50%;
+            background: var(--color-primary);
+            box-shadow: 0 0 8px var(--color-primary);
+        }
+
+        .trace-span.completed .trace-dot {
+            background: var(--color-success);
+            box-shadow: 0 0 8px var(--color-success);
+        }
+
+        .trace-span.failed .trace-dot {
+            background: var(--color-danger);
+            box-shadow: 0 0 8px var(--color-danger);
+        }
+
+        .trace-card {
+            background: rgba(255, 255, 255, 0.015);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .trace-name {
+            font-weight: 500;
+        }
+
+        .trace-time {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Checkpoint and tool logs display */
+        .details-grid {
+            grid-column: span 4;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+
+        .log-display {
+            background: #060913;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            font-family: 'Space Grotesk', monospace;
+            font-size: 0.85rem;
+            max-height: 250px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            color: #10b981;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.1);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.15);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-section">
+            <div class="logo-icon">Ω</div>
+            <div class="logo-text">
+                <h1>AgentOS</h1>
+                <span>Observability & Tracing Control Plane</span>
+            </div>
+        </div>
+        <div>
+            <span id="system-status" class="status-badge status-completed">NATS: Connected</span>
+        </div>
+    </header>
+
+    <main>
+        <!-- Metrics -->
+        <div class="metric-card">
+            <div class="metric-label">Active Manifests</div>
+            <div id="metric-manifests" class="metric-value">--</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Total Task Runs</div>
+            <div id="metric-tasks" class="metric-value">--</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Estimated Token Spend</div>
+            <div id="metric-tokens" class="metric-value">--</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Cost Incurred (USD)</div>
+            <div id="metric-cost" class="metric-value">--</div>
+        </div>
+
+        <!-- Task List Panel -->
+        <div class="panel tasks-panel">
+            <div class="panel-header">
+                <span>Recent Task Executions</span>
+                <span style="font-size: 0.8rem; color: var(--text-muted); cursor: pointer;" onclick="refreshDashboard()">Refresh 🔄</span>
+            </div>
+            <ul id="task-list-container" class="task-list">
+                <li style="color: var(--text-muted); text-align: center; padding: 2rem;">No tasks executed yet.</li>
+            </ul>
+        </div>
+
+        <!-- Distributed Tracing Inspector Panel -->
+        <div class="panel inspector-panel">
+            <div class="panel-header">
+                <span>Distributed Tracing Timeline</span>
+                <span id="selected-task-id" style="font-size: 0.85rem; color: var(--color-primary);">Select a task</span>
+            </div>
+            <div id="trace-timeline" class="trace-container">
+                <div style="color: var(--text-muted); text-align: center; padding: 2rem;">Select a task from the list to inspect execution spans.</div>
+            </div>
+        </div>
+
+        <!-- Subsystem Details Logs -->
+        <div class="details-grid">
+            <div class="panel">
+                <div class="panel-header">Checkpoints (Durable State)</div>
+                <div id="checkpoint-logs" class="log-display">Select a task to inspect state checkpoints.</div>
+            </div>
+            <div class="panel">
+                <div class="panel-header">Audited Tool Executions</div>
+                <div id="audit-logs" class="log-display">Select a task to inspect audited tool calls.</div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let currentSelectedTaskId = null;
+
+        async function fetchStats() {
+            try {
+                // Fetch stats from cost and stats APIs
+                const costRes = await fetch('/v1/cost/summary');
+                const costData = await costRes.json();
+                
+                document.getElementById('metric-manifests').innerText = costData.manifests_count || 0;
+                document.getElementById('metric-tasks').innerText = costData.tasks_count || 0;
+                document.getElementById('metric-tokens').innerText = costData.total_tokens ? costData.total_tokens.toLocaleString() : "0";
+                document.getElementById('metric-cost').innerText = costData.total_usd ? `$${costData.total_usd.toFixed(4)}` : "$0.00";
+            } catch (err) {
+                console.error("Error fetching stats:", err);
+            }
+        }
+
+        async function fetchTaskList() {
+            try {
+                // For simplicity, we query DB endpoints or fetch all tasks by querying cost/summary
+                const res = await fetch('/v1/cost/summary');
+                const data = await res.json();
+                const tasks = data.tasks || [];
+                
+                const container = document.getElementById('task-list-container');
+                if (tasks.length === 0) {
+                    container.innerHTML = '<li style="color: var(--text-muted); text-align: center; padding: 2rem;">No tasks executed yet.</li>';
+                    return;
+                }
+                
+                container.innerHTML = '';
+                tasks.forEach(t => {
+                    const li = document.createElement('li');
+                    li.className = `task-item ${currentSelectedTaskId === t.id ? 'active' : ''}`;
+                    li.onclick = () => selectTask(t.id);
+                    
+                    li.innerHTML = `
+                        <div class="task-meta">
+                            <span class="task-id">${t.id}</span>
+                            <span class="task-input">${t.input || ''}</span>
+                        </div>
+                        <span class="status-badge status-${t.status.toLowerCase()}">${t.status}</span>
+                    `;
+                    container.appendChild(li);
+                });
+            } catch (err) {
+                console.error("Error fetching task list:", err);
+            }
+        }
+
+        async function selectTask(taskId) {
+            currentSelectedTaskId = taskId;
+            document.getElementById('selected-task-id').innerText = `Task: ${taskId}`;
+            
+            // Re-render list active state
+            document.querySelectorAll('.task-item').forEach(item => {
+                if (item.querySelector('.task-id').innerText === taskId) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+
+            // Fetch Tracing Spans
+            try {
+                const res = await fetch(`/v1/traces/${taskId}`);
+                const traceData = await res.json();
+                
+                const container = document.getElementById('trace-timeline');
+                container.innerHTML = '';
+                
+                const spans = traceData.spans || [];
+                spans.forEach(span => {
+                    const spanDiv = document.createElement('div');
+                    spanDiv.className = `trace-span ${span.status.toLowerCase()}`;
+                    spanDiv.innerHTML = `
+                        <div class="trace-dot"></div>
+                        <div class="trace-card">
+                            <span class="trace-name">${span.name}</span>
+                            <span class="trace-time">${span.status}</span>
+                        </div>
+                    `;
+                    container.appendChild(spanDiv);
+                });
+            } catch (err) {
+                console.error("Error loading traces:", err);
+            }
+
+            // Fetch Checkpoints and Audits
+            try {
+                const taskRes = await fetch(`/v1/tasks/${taskId}`);
+                const taskData = await taskRes.json();
+                
+                // Render checkpoints
+                const cpContainer = document.getElementById('checkpoint-logs');
+                cpContainer.innerHTML = '';
+                if (taskData.checkpoints_count === 0) {
+                    cpContainer.innerText = "No checkpoints saved for this task.";
+                } else {
+                    cpContainer.innerText = `Found ${taskData.checkpoints_count} checkpoints saved in storage.\n\n` + 
+                        `Task Input: "${taskData.input}"\n` +
+                        `Task Status: ${taskData.status}\n` +
+                        `Last Update: ${new Date(taskData.updated_at).toLocaleString()}`;
+                }
+                
+                // Render audited tool calls
+                const auditContainer = document.getElementById('audit-logs');
+                auditContainer.innerHTML = '';
+                const audits = taskData.audited_tool_calls || [];
+                if (audits.length === 0) {
+                    auditContainer.innerText = "No audited tool calls made by this agent.";
+                } else {
+                    let logText = "";
+                    audits.forEach((aud, i) => {
+                        logText += `[${i+1}] Tool: ${aud.tool} | Status: ${aud.status}\n` +
+                                   `    Audited at: ${new Date(aud.created_at).toLocaleString()}\n\n`;
+                    });
+                    auditContainer.innerText = logText;
+                }
+            } catch (err) {
+                console.error("Error loading details:", err);
+            }
+        }
+
+        function refreshDashboard() {
+            fetchStats();
+            fetchTaskList();
+            if (currentSelectedTaskId) {
+                selectTask(currentSelectedTaskId);
+            }
+        }
+
+        // Auto Refresh
+        setInterval(refreshDashboard, 5000);
+        
+        // Initial Load
+        refreshDashboard();
+    </script>
+</body>
+</html>

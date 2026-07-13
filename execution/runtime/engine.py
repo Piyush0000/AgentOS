@@ -8,6 +8,7 @@ from storage.database import TaskTable, AgentInstanceTable, CheckpointTable, Too
 from cognition.gateway.llm import LLMGateway
 from memory.engine import MemoryEngine
 from execution.sandbox.runner import ToolRunner
+from core.security.permission_manager import PermissionManager
 
 logger = logging.getLogger("agentos.execution.runtime")
 
@@ -115,8 +116,8 @@ class AgentRuntime:
                         args = tool_call["arguments"]
                         tc_id = tool_call["id"]
 
-                        # Check manifest permissions
-                        allowed = self._check_tool_permissions(manifest, tool_name)
+                        # Evaluate ABAC policy rules via PermissionManager
+                        allowed, err_msg = PermissionManager.validate_tool_call(manifest, tool_name, args)
                         
                         # Audit Log: Record tool call request
                         audit_entry = ToolCallTable(
@@ -129,7 +130,6 @@ class AgentRuntime:
                         db.commit()
 
                         if not allowed:
-                            err_msg = f"Security Violation: Tool '{tool_name}' execution denied by Policy."
                             logger.warning(err_msg)
                             working_memory.append({
                                 "role": "tool",

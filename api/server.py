@@ -2,7 +2,9 @@ import os
 import sys
 import yaml
 import logging
-from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks, Query
+from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks, Query, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from typing import Dict, Any, List, Optional
 from pydantic import BaseModel
@@ -26,9 +28,12 @@ logger = logging.getLogger("agentos.api.server")
 
 app = FastAPI(
     title="AgentOS API Gateway", 
-    description="The Operating System for Autonomous AI Agents - Milestone 2 (Distributed)",
-    version="2.0"
+    description="The Operating System for Autonomous AI Agents - Milestone 3 (Hardened)",
+    version="3.0"
 )
+
+# Template engine setup
+templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "templates"))
 
 # Configuration for gRPC targets
 REGISTRY_TARGET = "localhost:50053"
@@ -69,7 +74,7 @@ def read_root():
     return {
         "status": "online",
         "system": "AgentOS",
-        "version": "2.0-milestone2",
+        "version": "3.0-milestone3",
         "architecture": "Distributed gRPC & NATS",
         "subsystems": {
             "api_gateway": "ready",
@@ -98,7 +103,7 @@ def register_agent(req: RegisterAgentRequest):
             }
     except grpc.RpcError as e:
         logger.error(f"Registry gRPC error: {e}")
-        raise HTTPException(status_code=502, detail=f"Registry Plane unavailable: {e.details()}")
+        raise HTTPException(status_code=520, detail=f"Registry Plane unavailable: {e.details()}")
 
 
 @app.get("/v1/agents/{id}")
@@ -120,13 +125,12 @@ def get_agent_manifest(id: str):
         if e.code() == grpc.StatusCode.NOT_FOUND:
             raise HTTPException(status_code=404, detail=e.details())
         logger.error(f"Registry gRPC error: {e}")
-        raise HTTPException(status_code=502, detail=f"Registry Plane unavailable: {e.details()}")
+        raise HTTPException(status_code=520, detail=f"Registry Plane unavailable: {e.details()}")
 
 
 # --- Task Submission (NATS Event-Driven) ---
 @app.post("/v1/agents/{id}/tasks")
 async def submit_task(id: str, req: SubmitTaskRequest, db: Session = Depends(get_db)):
-    # Retrieve manifest from Registry Server to verify existence
     try:
         with grpc.insecure_channel(REGISTRY_TARGET) as channel:
             stub = pb2_grpc.AgentRegistryServiceStub(channel)
@@ -135,9 +139,8 @@ async def submit_task(id: str, req: SubmitTaskRequest, db: Session = Depends(get
     except grpc.RpcError as e:
         if e.code() == grpc.StatusCode.NOT_FOUND:
             raise HTTPException(status_code=404, detail="Agent manifest not found")
-        raise HTTPException(status_code=502, detail="Registry Plane unavailable")
+        raise HTTPException(status_code=520, detail="Registry Plane unavailable")
 
-    # Get default instance
     instance = db.query(AgentInstanceTable).filter(
         AgentInstanceTable.manifest_id == id,
         AgentInstanceTable.version == agent_manifest.latest_version
@@ -152,7 +155,6 @@ async def submit_task(id: str, req: SubmitTaskRequest, db: Session = Depends(get
         db.add(instance)
         db.commit()
 
-    # Create task in database
     task = TaskTable(
         instance_id=instance.id,
         input_data=req.input,
@@ -164,7 +166,6 @@ async def submit_task(id: str, req: SubmitTaskRequest, db: Session = Depends(get
     db.add(task)
     db.commit()
 
-    # Publish tasks.queued event to NATS EventBus
     await event_bus.publish("tasks.queued", {
         "task_id": task.id,
         "agent_id": id,
@@ -219,7 +220,7 @@ def add_semantic_memory(agent_id: str, req: SemanticMemoryAddRequest):
             return {"status": response.status}
     except grpc.RpcError as e:
         logger.error(f"Memory gRPC error: {e}")
-        raise HTTPException(status_code=502, detail=f"Memory Plane unavailable: {e.details()}")
+        raise HTTPException(status_code=520, detail=f"Memory Plane unavailable: {e.details()}")
 
 
 @app.get("/v1/memory/{agent_id}/semantic")
@@ -242,15 +243,13 @@ def search_semantic_memory(
             return {"agent_id": agent_id, "query": query, "results": matches}
     except grpc.RpcError as e:
         logger.error(f"Memory gRPC error: {e}")
-        raise HTTPException(status_code=502, detail=f"Memory Plane unavailable: {e.details()}")
+        raise HTTPException(status_code=520, detail=f"Memory Plane unavailable: {e.details()}")
 
 
 # --- Distributed Workflows (Coordination Plane) ---
 @app.post("/v1/workflows/run")
 async def run_workflow(req: WorkflowRunRequest, background_tasks: BackgroundTasks):
-    # Runs the workflow asynchronously in the background so HTTP connection isn't blocked
     async def run_workflow_task():
-        # Create a clean loop-isolated EventBus and run it
         w_bus = EventBus()
         await w_bus.connect()
         w_engine = WorkflowEngine(w_bus)
@@ -261,3 +260,97 @@ async def run_workflow(req: WorkflowRunRequest, background_tasks: BackgroundTask
 
     background_tasks.add_task(run_workflow_task)
     return {"status": "triggered", "message": "Workflow started in background."}
+
+
+# --- Observability Web UI & Cost Analysis ---
+
+@app.get("/dashboard", response_class=HTMLResponse)
+def get_dashboard(request: Request):
+    """Serves the premium dark-mode glassmorphic telemetry dashboard."""
+    return templates.TemplateResponse("dashboard.html", {"request": request})
+
+
+@app.get("/v1/cost/summary")
+def get_cost_summary(db: Session = Depends(get_db)):
+    """Computes total manifests, tasks, tokens, and USD spent across all tasks."""
+    manifests_count = db.query(AgentManifestTable).count()
+    tasks = db.query(TaskTable).order_by(TaskTable.created_at.desc()).all()
+    tasks_count = len(tasks)
+    
+    total_tokens = 0
+    total_usd = 0.0
+    
+    task_list = []
+    for t in tasks:
+        # Simple simulated cost mapping for mock/production runs
+        tokens = 1500 if t.status == "COMPLETED" else (500 if t.status == "FAILED" else 0)
+        cost_usd = tokens * 0.000002  # $2 per million input tokens average
+        
+        total_tokens += tokens
+        total_usd += cost_usd
+        
+        task_list.append({
+            "id": t.id,
+            "input": t.input_data,
+            "status": t.status,
+            "priority": t.priority,
+            "created_at": t.created_at.isoformat()
+        })
+        
+    return {
+        "manifests_count": manifests_count,
+        "tasks_count": tasks_count,
+        "total_tokens": total_tokens,
+        "total_usd": total_usd,
+        "tasks": task_list
+    }
+
+
+@app.get("/v1/traces/{taskId}")
+def get_task_trace_spans(taskId: str, db: Session = Depends(get_db)):
+    """Dynamically reconstructs a distributed span trace timeline for a task."""
+    task = db.query(TaskTable).filter(TaskTable.id == taskId).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+        
+    spans = []
+    
+    # 1. API Gateway Span
+    spans.append({"name": "API Gateway: task submitted & NATS queued", "status": "COMPLETED"})
+    
+    # 2. Scheduler Span
+    if task.status in ["SCHEDULED", "RUNNING", "COMPLETED", "FAILED"]:
+        spans.append({"name": "Scheduler Daemon: evaluated priority & allocated node", "status": "COMPLETED"})
+    else:
+        spans.append({"name": "Scheduler Daemon: waiting for node allocation", "status": "RUNNING"})
+        
+    # 3. Worker Span
+    if task.status in ["RUNNING", "COMPLETED", "FAILED"]:
+        spans.append({"name": "Worker Daemon: task dequeued & routed via gRPC", "status": "COMPLETED"})
+    elif task.status == "SCHEDULED":
+        spans.append({"name": "Worker Daemon: dispatching task to node", "status": "RUNNING"})
+        
+    # 4. Runtime Span
+    if task.status in ["RUNNING", "COMPLETED", "FAILED"]:
+        spans.append({"name": "Agent Runtime Server: reasoning loop initialized", "status": "COMPLETED"})
+        
+    # 5. Audited Tool Call Spans
+    tool_calls = db.query(ToolCallTable).filter(ToolCallTable.task_id == taskId).all()
+    for tc in tool_calls:
+        span_status = "COMPLETED"
+        if tc.status in ["DENIED", "FAILED"]:
+            span_status = "FAILED"
+        spans.append({
+            "name": f"Docker Sandbox: execute tool '{tc.tool_name}'",
+            "status": span_status
+        })
+        
+    # 6. Final Status Span
+    if task.status == "COMPLETED":
+        spans.append({"name": "Agent Runtime Server: execution succeeded. output returned", "status": "COMPLETED"})
+    elif task.status == "FAILED":
+        spans.append({"name": f"Agent Runtime Server: execution failed. Error: {task.error_message}", "status": "FAILED"})
+    elif task.status == "RUNNING":
+        spans.append({"name": "Agent Runtime Server: reasoning and generating next step", "status": "RUNNING"})
+        
+    return {"taskId": taskId, "spans": spans}

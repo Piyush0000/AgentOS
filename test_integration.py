@@ -262,6 +262,59 @@ budget:
     assert len(results) > 0
     assert "Pythagorean" in results[0]["text"], "Top search result should be the Pythagorean theorem."
     
+    # 9. Verify Cost & Stats API and Tracing Spans API (Observability Verification)
+    logger.info("--- Phase 5: Observability telemetry and stats APIs ---")
+    res_cost = client.get("/v1/cost/summary")
+    assert res_cost.status_code == 200
+    cost_data = res_cost.json()
+    logger.info(f"Cost Summary Data: {cost_data}")
+    assert cost_data["manifests_count"] > 0
+    assert cost_data["tasks_count"] >= 2
+    assert cost_data["total_tokens"] > 0
+    assert cost_data["total_usd"] > 0.0
+
+    res_trace = client.get(f"/v1/traces/{task1_id}")
+    assert res_trace.status_code == 200
+    trace_data = res_trace.json()
+    logger.info(f"Task 1 Tracing Spans: {trace_data}")
+    assert "spans" in trace_data
+    assert len(trace_data["spans"]) >= 4
+    
+    # 10. Direct ABAC Security Enforcer Verification
+    logger.info("--- Phase 6: ABAC Permission Manager Policy Verification ---")
+    from core.security.permission_manager import PermissionManager
+    from core.manifest.models import AgentManifest, ToolPermission
+    
+    dummy_manifest = AgentManifest(
+        id="test-agent",
+        name="Test Agent",
+        description="Testing security limits",
+        system_prompt="You are a test agent.",
+        tools=[
+            ToolPermission(name="execute_command", scopes=[]),
+            ToolPermission(name="file_write", scopes=[]),
+            ToolPermission(name="calculate", scopes=[])
+        ]
+    )
+    
+    # Verify command injection metacharacters are denied
+    ok, err = PermissionManager.validate_tool_call(dummy_manifest, "execute_command", {"command": "echo 'HACK'; cat secrets"})
+    assert not ok
+    assert "forbidden shell metacharacters" in err
+    logger.info(f"ABAC blocked command metacharacter: {err}")
+
+    # Verify forbidden binaries are denied
+    ok, err = PermissionManager.validate_tool_call(dummy_manifest, "execute_command", {"command": "sudo rm -rf /"})
+    assert not ok
+    assert "forbidden system binaries" in err
+    logger.info(f"ABAC blocked sudo execution: {err}")
+
+    # Verify path traversal is denied
+    ok, err = PermissionManager.validate_tool_call(dummy_manifest, "file_write", {"filepath": "../../etc/passwd", "content": "hack"})
+    assert not ok
+    assert "Directory traversal detected" in err
+    logger.info(f"ABAC blocked path traversal: {err}")
+
     db.close()
     
     # Stop async loop
