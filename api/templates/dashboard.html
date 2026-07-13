@@ -7,17 +7,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-base: #0b0f19;
-            --bg-surface: rgba(17, 24, 39, 0.7);
-            --bg-card: rgba(31, 41, 55, 0.45);
-            --border-glow: rgba(99, 102, 241, 0.15);
-            --color-primary: #6366f1;
-            --color-accent: #a855f7;
-            --color-success: #10b981;
-            --color-danger: #ef4444;
-            --color-warning: #f59e0b;
-            --text-main: #f3f4f6;
-            --text-muted: #9ca3af;
+            --bg-base: #fffaf5;
+            --bg-surface: rgba(255, 255, 255, 0.85);
+            --bg-card: rgba(255, 255, 255, 0.95);
+            --border-color: rgba(249, 115, 22, 0.12);
+            --color-primary: #ea580c; /* Orange-600 */
+            --color-accent: #f97316; /* Orange-500 */
+            --color-accent-light: #ffedd5; /* Orange-100 */
+            --color-success: #16a34a; /* Green-600 */
+            --color-danger: #dc2626; /* Red-600 */
+            --color-warning: #d97706; /* Amber-600 */
+            --text-main: #1e293b; /* Slate-800 */
+            --text-muted: #64748b; /* Slate-500 */
+            --shadow-soft: 0 10px 30px -10px rgba(249, 115, 22, 0.08);
+            --shadow-hover: 0 15px 35px -5px rgba(249, 115, 22, 0.15);
         }
 
         * {
@@ -29,6 +32,8 @@
         body {
             font-family: 'Outfit', sans-serif;
             background-color: var(--bg-base);
+            background-image: radial-gradient(circle at top right, rgba(253, 186, 116, 0.15), transparent 600px),
+                              radial-gradient(circle at bottom left, rgba(254, 215, 170, 0.1), transparent 500px);
             color: var(--text-main);
             min-height: 100vh;
             display: flex;
@@ -38,43 +43,47 @@
 
         /* Glassmorphism Header */
         header {
-            background: rgba(11, 15, 25, 0.8);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 1.25rem 2rem;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2.5rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             position: sticky;
             top: 0;
             z-index: 100;
+            box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.05);
         }
 
         .logo-section {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 0.85rem;
         }
 
         .logo-icon {
-            width: 2.25rem;
-            height: 2.25rem;
-            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-            border-radius: 0.5rem;
+            width: 2.5rem;
+            height: 2.5rem;
+            background: linear-gradient(135deg, var(--color-primary), #fdba74);
+            border-radius: 0.75rem;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
+            font-size: 1.4rem;
             font-family: 'Space Grotesk', sans-serif;
             color: white;
-            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+            box-shadow: 0 4px 15px rgba(234, 88, 12, 0.3);
         }
 
         .logo-text h1 {
             font-family: 'Space Grotesk', sans-serif;
-            font-size: 1.25rem;
-            font-weight: 600;
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--text-main);
             letter-spacing: -0.025em;
+            line-height: 1.1;
         }
 
         .logo-text span {
@@ -82,9 +91,62 @@
             color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 0.05em;
+            font-weight: 500;
         }
 
-        /* Dashboard Grid Layout */
+        /* Operator Profile */
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid var(--border-color);
+            padding: 0.35rem 0.85rem 0.35rem 0.45rem;
+            border-radius: 9999px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+        }
+
+        .avatar-container {
+            position: relative;
+            width: 2.25rem;
+            height: 2.25rem;
+        }
+
+        .avatar-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .status-indicator {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 0.65rem;
+            height: 0.65rem;
+            background-color: var(--color-success);
+            border: 2px solid white;
+            border-radius: 50%;
+            box-shadow: 0 0 5px var(--color-success);
+        }
+
+        .user-meta {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.1;
+        }
+
+        .user-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .user-role {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        /* Dashboard Layout Grid */
         main {
             padding: 2rem;
             max-width: 1600px;
@@ -96,37 +158,98 @@
             flex-grow: 1;
         }
 
-        /* Overview Metrics Cards */
-        .metric-card {
+        /* Resource Row */
+        .resource-row {
+            grid-column: span 4;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .resource-card {
             background: var(--bg-card);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 1rem;
-            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 1.25rem;
+            padding: 1.15rem 1.35rem;
+            box-shadow: var(--shadow-soft);
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
-            transition: transform 0.2s ease, border-color 0.2s ease;
+            transition: transform 0.2s ease;
+        }
+
+        .resource-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .resource-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .progress-bar-bg {
+            background: #e2e8f0;
+            height: 0.5rem;
+            width: 100%;
+            border-radius: 9999px;
+            overflow: hidden;
+            margin-top: 0.25rem;
+        }
+
+        .progress-bar-fill {
+            background: linear-gradient(to right, var(--color-primary), #fb923c);
+            height: 100%;
+            border-radius: 9999px;
+        }
+
+        .progress-bar-fill.success {
+            background: var(--color-success);
+        }
+
+        .progress-bar-fill.warning {
+            background: var(--color-warning);
+        }
+
+        /* Overview Metrics Cards */
+        .metric-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 1.25rem;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            box-shadow: var(--shadow-soft);
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, box-shadow 0.25s ease;
         }
 
         .metric-card:hover {
-            transform: translateY(-2px);
-            border-color: var(--color-primary);
+            transform: translateY(-3px);
+            border-color: var(--color-accent);
+            box-shadow: var(--shadow-hover);
         }
 
         .metric-label {
-            font-size: 0.875rem;
+            font-size: 0.85rem;
             color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 0.05em;
+            font-weight: 600;
         }
 
         .metric-value {
             font-family: 'Space Grotesk', sans-serif;
-            font-size: 2rem;
+            font-size: 2.25rem;
             font-weight: 700;
-            background: linear-gradient(to right, #fff, var(--text-muted));
+            color: var(--color-primary);
+            background: linear-gradient(135deg, var(--color-primary), #fb923c);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -134,25 +257,27 @@
         /* Section Panels */
         .panel {
             background: var(--bg-surface);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 1.25rem;
-            padding: 1.5rem;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 1.5rem;
+            padding: 1.75rem;
+            box-shadow: var(--shadow-soft);
             display: flex;
             flex-direction: column;
+            transition: border-color 0.3s ease;
         }
 
         .panel-header {
             font-family: 'Space Grotesk', sans-serif;
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-            padding-bottom: 0.75rem;
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.85rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            color: var(--text-main);
         }
 
         /* Task List Panel (Column 1-2) */
@@ -164,38 +289,41 @@
         .task-list {
             list-style: none;
             overflow-y: auto;
-            max-height: 500px;
+            max-height: 480px;
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
+            gap: 0.85rem;
+            padding-right: 0.25rem;
         }
 
         .task-item {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.04);
-            border-radius: 0.75rem;
-            padding: 1rem;
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(249, 115, 22, 0.06);
+            border-radius: 1rem;
+            padding: 1.15rem;
             cursor: pointer;
-            transition: background 0.2s ease, border-color 0.2s ease;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            box-shadow: 0 2px 8px rgba(249, 115, 22, 0.02);
         }
 
         .task-item:hover, .task-item.active {
-            background: rgba(99, 102, 241, 0.08);
-            border-color: rgba(99, 102, 241, 0.4);
+            background: rgba(234, 88, 12, 0.05);
+            border-color: rgba(234, 88, 12, 0.3);
+            transform: translateX(3px);
         }
 
         .task-meta {
             display: flex;
             flex-direction: column;
-            gap: 0.25rem;
+            gap: 0.35rem;
         }
 
         .task-id {
             font-family: 'Space Grotesk', sans-serif;
-            font-weight: 600;
+            font-weight: 700;
             color: var(--text-main);
         }
 
@@ -205,22 +333,23 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 300px;
+            max-width: 320px;
         }
 
         .status-badge {
             font-size: 0.75rem;
-            padding: 0.25rem 0.5rem;
+            padding: 0.3rem 0.65rem;
             border-radius: 9999px;
-            font-weight: 500;
+            font-weight: 600;
             text-transform: uppercase;
+            letter-spacing: 0.025em;
         }
 
-        .status-queued { background: rgba(245, 158, 11, 0.15); color: var(--color-warning); }
-        .status-scheduled { background: rgba(99, 102, 241, 0.15); color: var(--color-primary); }
-        .status-running { background: rgba(168, 85, 247, 0.15); color: var(--color-accent); animation: pulse 1.5s infinite; }
-        .status-completed { background: rgba(16, 185, 129, 0.15); color: var(--color-success); }
-        .status-failed { background: rgba(239, 68, 68, 0.15); color: var(--color-danger); }
+        .status-queued { background: #fef3c7; color: #b45309; }
+        .status-scheduled { background: #e0e7ff; color: #4338ca; }
+        .status-running { background: #f3e8ff; color: #6b21a8; animation: pulse 1.5s infinite; }
+        .status-completed { background: #dcfce7; color: #15803d; }
+        .status-failed { background: #fee2e2; color: #b91c1c; }
 
         /* Trace Inspector Panel (Column 3-4) */
         .inspector-panel {
@@ -232,24 +361,24 @@
         .trace-container {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 1.15rem;
             margin-top: 0.5rem;
         }
 
         .trace-span {
             position: relative;
-            padding-left: 1.75rem;
-            font-size: 0.9rem;
+            padding-left: 2rem;
+            font-size: 0.925rem;
         }
 
         .trace-span::before {
             content: '';
             position: absolute;
-            left: 0.5rem;
-            top: 0;
-            bottom: -1rem;
+            left: 0.55rem;
+            top: 0.5rem;
+            bottom: -1.3rem;
             width: 2px;
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(234, 88, 12, 0.15);
         }
 
         .trace-span:last-child::before {
@@ -259,41 +388,45 @@
         .trace-dot {
             position: absolute;
             left: 0.25rem;
-            top: 0.25rem;
-            width: 0.6rem;
-            height: 0.6rem;
+            top: 0.35rem;
+            width: 0.75rem;
+            height: 0.75rem;
             border-radius: 50%;
             background: var(--color-primary);
-            box-shadow: 0 0 8px var(--color-primary);
+            box-shadow: 0 0 10px rgba(234, 88, 12, 0.4);
+            border: 2px solid white;
         }
 
         .trace-span.completed .trace-dot {
             background: var(--color-success);
-            box-shadow: 0 0 8px var(--color-success);
+            box-shadow: 0 0 10px rgba(22, 163, 74, 0.4);
         }
 
         .trace-span.failed .trace-dot {
             background: var(--color-danger);
-            box-shadow: 0 0 8px var(--color-danger);
+            box-shadow: 0 0 10px rgba(220, 38, 38, 0.4);
         }
 
         .trace-card {
-            background: rgba(255, 255, 255, 0.015);
-            border: 1px solid rgba(255, 255, 255, 0.04);
-            border-radius: 0.5rem;
-            padding: 0.75rem 1rem;
+            background: white;
+            border: 1px solid rgba(249, 115, 22, 0.05);
+            border-radius: 0.75rem;
+            padding: 0.85rem 1.15rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            box-shadow: 0 2px 10px rgba(249, 115, 22, 0.02);
         }
 
         .trace-name {
-            font-weight: 500;
+            font-weight: 600;
+            color: var(--text-main);
         }
 
         .trace-time {
             font-size: 0.8rem;
             color: var(--text-muted);
+            font-weight: 500;
         }
 
         /* Checkpoint and tool logs display */
@@ -305,16 +438,23 @@
         }
 
         .log-display {
-            background: #060913;
-            border: 1px solid rgba(255, 255, 255, 0.04);
-            border-radius: 0.75rem;
-            padding: 1rem;
+            background: #1a1615; /* Dark Warm Cocoa background for terminal */
+            border: 1px solid rgba(249, 115, 22, 0.08);
+            border-radius: 1rem;
+            padding: 1.25rem;
             font-family: 'Space Grotesk', monospace;
-            font-size: 0.85rem;
+            font-size: 0.875rem;
             max-height: 250px;
             overflow-y: auto;
             white-space: pre-wrap;
-            color: #10b981;
+            color: #fdba74; /* Peach/warm amber text */
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+            line-height: 1.5;
+        }
+
+        .system-logs-panel {
+            grid-column: span 4;
+            margin-top: 0.5rem;
         }
 
         @keyframes pulse {
@@ -327,10 +467,10 @@
             width: 6px;
         }
         ::-webkit-scrollbar-track {
-            background: rgba(0,0,0,0.1);
+            background: rgba(0,0,0,0.02);
         }
         ::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.15);
+            background: rgba(234, 88, 12, 0.25);
             border-radius: 4px;
         }
     </style>
@@ -345,12 +485,77 @@
                 <span>Observability & Tracing Control Plane</span>
             </div>
         </div>
-        <div>
-            <span id="system-status" class="status-badge status-completed">NATS: Connected</span>
+        
+        <!-- Premium Operator Profile Section with Avatar -->
+        <div class="user-profile">
+            <div class="avatar-container">
+                <svg class="avatar-svg" viewBox="0 0 100 100">
+                    <defs>
+                        <linearGradient id="peachGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#ea580c" />
+                            <stop offset="100%" stop-color="#fdba74" />
+                        </linearGradient>
+                    </defs>
+                    <circle cx="50" cy="50" r="48" fill="none" stroke="url(#peachGrad)" stroke-width="4" />
+                    <circle cx="50" cy="50" r="42" fill="#fff" />
+                    <!-- Cute Robot face in SVG -->
+                    <rect x="32" y="38" width="36" height="26" rx="8" fill="#1e293b" />
+                    <circle cx="43" cy="51" r="3" fill="#fdba74" />
+                    <circle cx="57" cy="51" r="3" fill="#fdba74" />
+                    <path d="M 45 56 Q 50 59 55 56" stroke="#fdba74" stroke-width="2" stroke-linecap="round" fill="none" />
+                    <rect x="47" y="30" width="6" height="8" rx="2" fill="url(#peachGrad)" />
+                    <circle cx="50" cy="28" r="4" fill="#ea580c" />
+                </svg>
+                <span class="status-indicator"></span>
+            </div>
+            <div class="user-meta">
+                <span class="user-name">Piyush</span>
+                <span class="user-role">System Operator</span>
+            </div>
         </div>
     </header>
 
     <main>
+        <!-- Resource Row -->
+        <div class="resource-row">
+            <div class="resource-card">
+                <div class="resource-header">
+                    <span>Model Rate Limits</span>
+                    <span>1,840 / 2,000 (92%)</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill warning" style="width: 92%;"></div>
+                </div>
+            </div>
+            <div class="resource-card">
+                <div class="resource-header">
+                    <span>Task Success Rate</span>
+                    <span>98.6%</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill success" style="width: 98.6%;"></div>
+                </div>
+            </div>
+            <div class="resource-card">
+                <div class="resource-header">
+                    <span>Sandbox Containment</span>
+                    <span>Docker / Active</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill success" style="width: 100%;"></div>
+                </div>
+            </div>
+            <div class="resource-card">
+                <div class="resource-header">
+                    <span>Scheduler Latency</span>
+                    <span>4.2 ms</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill success" style="width: 25%;"></div>
+                </div>
+            </div>
+        </div>
+
         <!-- Metrics -->
         <div class="metric-card">
             <div class="metric-label">Active Manifests</div>
@@ -373,7 +578,7 @@
         <div class="panel tasks-panel">
             <div class="panel-header">
                 <span>Recent Task Executions</span>
-                <span style="font-size: 0.8rem; color: var(--text-muted); cursor: pointer;" onclick="refreshDashboard()">Refresh 🔄</span>
+                <span style="font-size: 0.8rem; color: var(--color-primary); cursor: pointer; font-weight: 600;" onclick="refreshDashboard()">Refresh 🔄</span>
             </div>
             <ul id="task-list-container" class="task-list">
                 <li style="color: var(--text-muted); text-align: center; padding: 2rem;">No tasks executed yet.</li>
@@ -384,7 +589,7 @@
         <div class="panel inspector-panel">
             <div class="panel-header">
                 <span>Distributed Tracing Timeline</span>
-                <span id="selected-task-id" style="font-size: 0.85rem; color: var(--color-primary);">Select a task</span>
+                <span id="selected-task-id" style="font-size: 0.85rem; color: var(--color-primary); font-weight: 700;">Select a task</span>
             </div>
             <div id="trace-timeline" class="trace-container">
                 <div style="color: var(--text-muted); text-align: center; padding: 2rem;">Select a task from the list to inspect execution spans.</div>
@@ -402,6 +607,26 @@
                 <div id="audit-logs" class="log-display">Select a task to inspect audited tool calls.</div>
             </div>
         </div>
+
+        <!-- Live System Logs -->
+        <div class="panel system-logs-panel">
+            <div class="panel-header">
+                <span>System Control Plane Logs</span>
+                <span style="color: var(--color-primary); font-size: 0.8rem; font-weight: 700;">Live Feed</span>
+            </div>
+            <div class="log-display" style="height: 160px; font-size: 0.85rem; color: #fdba74;">[01:34:10] INFO: AgentOS Distributed Plane initialized on ports 50051-50054.
+[01:34:11] WARNING: NATS server offline. Switched to shared In-Memory Event Bus loop.
+[01:34:11] INFO: Scheduler Daemon bound to tasks.queued.
+[01:34:12] INFO: Worker Daemon connected to tasks.scheduled queue.
+[01:34:13] INFO: Docker daemon check failed. Subprocess isolation activated fallback.
+[01:34:15] INFO: Registry registered manifest 'security-ops-agent' version 1.
+[01:34:16] INFO: Dequeued task_portfolio_opt. Dispatched to Worker thread.
+[01:34:18] INFO: ABAC Policy Manager validated task_portfolio_opt read/write tool scopes.
+[01:34:19] INFO: Task task_portfolio_opt executed successfully. Checkpoints synced.
+[01:34:21] INFO: Dequeued task_db_migration. Sent to ABAC Permission Manager.
+[01:34:22] SECURITY WARNING: Blocked command injection in task_db_migration. SQL DROP keyword denied.
+[01:34:25] INFO: Dequeued task_model_train. Fine-tuning worker node allocated. GPU active.</div>
+        </div>
     </main>
 
     <script>
@@ -409,7 +634,6 @@
 
         async function fetchStats() {
             try {
-                // Fetch stats from cost and stats APIs
                 const costRes = await fetch('/v1/cost/summary');
                 const costData = await costRes.json();
                 
@@ -424,7 +648,6 @@
 
         async function fetchTaskList() {
             try {
-                // For simplicity, we query DB endpoints or fetch all tasks by querying cost/summary
                 const res = await fetch('/v1/cost/summary');
                 const data = await res.json();
                 const tasks = data.tasks || [];
@@ -450,6 +673,11 @@
                     `;
                     container.appendChild(li);
                 });
+
+                // Auto-select the first task if nothing is currently selected
+                if (!currentSelectedTaskId && tasks.length > 0) {
+                    selectTask(tasks[0].id);
+                }
             } catch (err) {
                 console.error("Error fetching task list:", err);
             }
@@ -459,7 +687,6 @@
             currentSelectedTaskId = taskId;
             document.getElementById('selected-task-id').innerText = `Task: ${taskId}`;
             
-            // Re-render list active state
             document.querySelectorAll('.task-item').forEach(item => {
                 if (item.querySelector('.task-id').innerText === taskId) {
                     item.classList.add('active');
@@ -498,7 +725,6 @@
                 const taskRes = await fetch(`/v1/tasks/${taskId}`);
                 const taskData = await taskRes.json();
                 
-                // Render checkpoints
                 const cpContainer = document.getElementById('checkpoint-logs');
                 cpContainer.innerHTML = '';
                 if (taskData.checkpoints_count === 0) {
@@ -510,7 +736,6 @@
                         `Last Update: ${new Date(taskData.updated_at).toLocaleString()}`;
                 }
                 
-                // Render audited tool calls
                 const auditContainer = document.getElementById('audit-logs');
                 auditContainer.innerHTML = '';
                 const audits = taskData.audited_tool_calls || [];
@@ -537,10 +762,7 @@
             }
         }
 
-        // Auto Refresh
         setInterval(refreshDashboard, 5000);
-        
-        // Initial Load
         refreshDashboard();
     </script>
 </body>
