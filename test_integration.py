@@ -42,9 +42,17 @@ def run_grpc_server(serve_fn):
 def run_integration_test():
     logger.info("Initializing AgentOS Distributed Integration Test...")
     
-    # 1. Initialize Test Database
-    if os.path.exists("agentos.db"):
-        os.remove("agentos.db")
+    # 1. Initialize Test Database (Drop and recreate tables cleanly to avoid Windows file locks)
+    from storage.database import engine, Base
+    try:
+        Base.metadata.drop_all(bind=engine)
+    except Exception as e:
+        logger.warning(f"Could not drop all tables: {e}. Attempting file delete fallback.")
+        if os.path.exists("agentos.db"):
+            try:
+                os.remove("agentos.db")
+            except Exception as ex:
+                logger.warning(f"Could not delete database file: {ex}. Proceeding with existing DB.")
     init_db()
     
     # 2. Start all 4 gRPC servers in background threads

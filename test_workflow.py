@@ -29,9 +29,17 @@ pb2, pb2_grpc = load_grpc_protos()
 async def run_workflow_integration_test():
     logger.info("Initializing AgentOS Workflow Integration Test...")
     
-    # 1. Clean Database
-    if os.path.exists("agentos.db"):
-        os.remove("agentos.db")
+    # 1. Clean Database (Drop and recreate tables cleanly to avoid Windows file locks)
+    from storage.database import engine, Base
+    try:
+        Base.metadata.drop_all(bind=engine)
+    except Exception as e:
+        logger.warning(f"Could not drop all tables: {e}. Attempting file delete fallback.")
+        if os.path.exists("agentos.db"):
+            try:
+                os.remove("agentos.db")
+            except Exception as ex:
+                logger.warning(f"Could not delete database file: {ex}. Proceeding with existing DB.")
     init_db()
     
     db: Session = SessionLocal()

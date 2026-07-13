@@ -6,19 +6,26 @@ from typing import Dict, Any, Callable, Awaitable
 logger = logging.getLogger("agentos.core.event_bus")
 
 class EventBus:
+    # Class-level shared broker handlers: subject -> list of (async callback, registering event loop)
+    in_memory_handlers = {}
+
     def __init__(self, servers=None):
         if servers is None:
             servers = ["nats://localhost:4222"]
         self.servers = servers
         self.nc = None
         self.connected = False
-        self.in_memory_handlers = {}  # subject -> list of async callbacks
 
     async def connect(self):
         try:
             from nats.aio.client import Client as NATS
             self.nc = NATS()
-            await self.nc.connect(servers=self.servers, connect_timeout=1)
+            await self.nc.connect(
+                servers=self.servers, 
+                connect_timeout=0.5, 
+                allow_reconnect=False, 
+                max_reconnect_attempts=0
+            )
             self.connected = True
             logger.info("Successfully connected to NATS Server. ✅")
         except Exception as e:
@@ -34,10 +41,17 @@ class EventBus:
         else:
             logger.info(f"[In-Memory Publish] subject={subject} data={data}")
             # Trigger mock subscriptions
-            if subject in self.in_memory_handlers:
-                for handler in self.in_memory_handlers[subject]:
-                    # Schedule handler execution in current loop
-                    asyncio.create_task(handler(data))
+            if subject in EventBus.in_memory_handlers:
+                for handler, loop in EventBus.in_memory_handlers[subject]:
+                    try:
+                        if loop and loop.is_running():
+                            # Safely schedule across thread loops
+                            asyncio.run_coroutine_threadsafe(handler(data), loop)
+                        else:
+                            # Run on current event loop
+                            asyncio.create_task(handler(data))
+                    except Exception as ex:
+                        logger.error(f"Error dispatching in-memory handler: {ex}")
 
     async def subscribe(self, subject: str, handler: Callable[[Dict[str, Any]], Awaitable[None]]):
         if self.connected and self.nc:
@@ -50,9 +64,15 @@ class EventBus:
             await self.nc.subscribe(subject, cb=nats_callback)
             logger.info(f"[NATS Subscribe] Subscribed to subject={subject}")
         else:
-            if subject not in self.in_memory_handlers:
-                self.in_memory_handlers[subject] = []
-            self.in_memory_handlers[subject].append(handler)
+            # Capture the current thread's active event loop
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = None
+                
+            if subject not in EventBus.in_memory_handlers:
+                EventBus.in_memory_handlers[subject] = []
+            EventBus.in_memory_handlers[subject].append((handler, loop))
             logger.info(f"[In-Memory Subscribe] Subscribed to subject={subject}")
 
     async def close(self):
