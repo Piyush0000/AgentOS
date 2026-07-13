@@ -17,6 +17,26 @@ class EventBus:
         self.connected = False
 
     async def connect(self):
+        # 1. Fast TCP socket pre-check to detect if NATS is running (prevents Windows asyncio hangs)
+        try:
+            import socket
+            host, port = "localhost", 4222
+            for s in self.servers:
+                if "://" in s:
+                    s = s.split("://")[1]
+                if ":" in s:
+                    host, port = s.split(":")
+                    port = int(port)
+            # Try to connect with a very short timeout
+            sock = socket.create_connection((host, port), timeout=0.1)
+            sock.close()
+        except Exception:
+            logger.info("NATS server not reachable. Falling back to in-memory Event Bus.")
+            self.connected = False
+            self.nc = None
+            return
+
+        # 2. If reachable, connect NATS client
         try:
             from nats.aio.client import Client as NATS
             self.nc = NATS()
