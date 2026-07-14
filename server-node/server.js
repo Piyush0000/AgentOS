@@ -260,7 +260,7 @@ app.get('/v1/tasks/:taskId', verifyToken, async (req, res) => {
 // --------------------------------------------------------
 app.post('/v1/agents/:id/tasks', verifyToken, async (req, res) => {
   try {
-    const { input_data, priority } = req.body;
+    const { input_data, priority, llm_provider, llm_api_key } = req.body;
     if (!input_data) {
       return res.status(400).json({ error: 'Missing input_data parameter' });
     }
@@ -285,6 +285,8 @@ app.post('/v1/agents/:id/tasks', verifyToken, async (req, res) => {
       user_id: req.userId,
       input_data,
       priority: priority || 'medium',
+      llm_provider: llm_provider || null,
+      llm_api_key: llm_api_key || null,
       status: 'QUEUED'
     });
 
@@ -380,7 +382,41 @@ function executeGRPCTask(task) {
 // Bootstrap
 // --------------------------------------------------------
 const PORT = process.env.PORT || 8000;
-sequelize.sync().then(() => {
+sequelize.sync().then(async () => {
+  try {
+    const manifestId = 'security-ops-agent';
+    const existing = await AgentManifest.findByPk(manifestId);
+    if (!existing) {
+      console.log(`[Seed] Seeding default manifest 'security-ops-agent'...`);
+      await AgentManifest.create({
+        id: manifestId,
+        name: 'Security Operations Assistant',
+        description: 'Demo Agent for scanning code, optimizing models, and securing runtimes.'
+      });
+      await AgentVersion.create({
+        manifest_id: manifestId,
+        version: 1,
+        manifest_yaml: `id: security-ops-agent
+name: Security Operations Assistant
+description: Demo Agent for scanning code, optimizing models, and securing runtimes.
+model: gpt-4o
+system_prompt: You are a security and operations agent assistant.
+tools:
+  - name: calculate
+    scopes: []
+  - name: file_read
+    scopes: ["read-only"]
+  - name: file_write
+    scopes: ["write"]
+  - name: execute_command
+    scopes: ["execute"]`
+      });
+      console.log(`[Seed] Seeded default manifest and version successfully!`);
+    }
+  } catch (seedErr) {
+    console.error('[Seed] Database seeding failed:', seedErr);
+  }
+
   app.listen(PORT, () => {
     console.log(`========================================================`);
     console.log(`AgentOS Express API Gateway running on port ${PORT}`);

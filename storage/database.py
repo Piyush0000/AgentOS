@@ -71,6 +71,9 @@ class TaskTable(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
     
+    llm_provider = Column(String, nullable=True)
+    llm_api_key = Column(String, nullable=True)
+    
     instance = relationship("AgentInstanceTable", back_populates="tasks")
     checkpoints = relationship("CheckpointTable", back_populates="task")
     user = relationship("UserTable", back_populates="tasks")

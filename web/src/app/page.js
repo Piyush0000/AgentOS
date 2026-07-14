@@ -27,6 +27,8 @@ export default function Dashboard() {
   const [taskPriority, setTaskPriority] = useState('medium');
   const [submitLoading, setSubmitLoading] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [llmProvider, setLlmProvider] = useState('gemini');
+  const [llmApiKey, setLlmApiKey] = useState('');
   
   const router = useRouter();
   const pollRef = useRef(null);
@@ -124,7 +126,9 @@ export default function Dashboard() {
         },
         body: JSON.stringify({
           input_data: inputTask,
-          priority: taskPriority
+          priority: taskPriority,
+          llm_provider: llmProvider,
+          llm_api_key: llmApiKey
         })
       });
 
@@ -301,6 +305,44 @@ export default function Dashboard() {
                   resize: 'none'
                 }}
               />
+            </div>
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '0.2rem', marginBottom: '0.8rem' }}>
+              <div style={{ flex: '0 0 130px' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.25rem' }}>LLM Provider</label>
+                <select
+                  value={llmProvider}
+                  onChange={(e) => setLlmProvider(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.45rem',
+                    borderRadius: '0.5rem',
+                    border: '1px solid var(--border-color)',
+                    fontSize: '0.85rem',
+                    outline: 'none',
+                    backgroundColor: 'white'
+                  }}
+                >
+                  <option value="gemini">Google Gemini</option>
+                  <option value="mistral">Mistral AI</option>
+                </select>
+              </div>
+              <div style={{ flexGrow: 1 }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Client API Key</label>
+                <input
+                  type="password"
+                  value={llmApiKey}
+                  onChange={(e) => setLlmApiKey(e.target.value)}
+                  placeholder={`Enter your ${llmProvider === 'gemini' ? 'Gemini' : 'Mistral'} API Key...`}
+                  style={{
+                    width: '100%',
+                    padding: '0.45rem',
+                    borderRadius: '0.5rem',
+                    border: '1px solid var(--border-color)',
+                    fontSize: '0.85rem',
+                    outline: 'none'
+                  }}
+                />
+              </div>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', gap: '0.5rem' }}>

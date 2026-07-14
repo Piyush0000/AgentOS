@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x14protos/agentos.proto\x12\x07\x61gentos\"L\n\x07Message\x12\x0c\n\x04role\x18\x01 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x02 \x01(\t\x12\x14\n\x0ctool_call_id\x18\x03 \x01(\t\x12\x0c\n\x04name\x18\x04 \x01(\t\"B\n\x04Tool\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x02 \x01(\t\x12\x17\n\x0fparameters_json\x18\x03 \x01(\t\"<\n\x08ToolCall\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x16\n\x0e\x61rguments_json\x18\x03 \x01(\t\"C\n\x0bMemoryMatch\x12\x0c\n\x04text\x18\x01 \x01(\t\x12\x12\n\nsimilarity\x18\x02 \x01(\x02\x12\x12\n\ncreated_at\x18\x03 \x01(\t\"-\n\x14RegisterAgentRequest\x12\x15\n\rmanifest_yaml\x18\x01 \x01(\t\"R\n\x15RegisterAgentResponse\x12\n\n\x02id\x18\x02 \x01(\t\x12\x0c\n\x04name\x18\x03 \x01(\t\x12\x0f\n\x07version\x18\x04 \x01(\x05\x12\x0e\n\x06status\x18\x05 \x01(\t\"\x1d\n\x0fGetAgentRequest\x12\n\n\x02id\x18\x01 \x01(\t\"p\n\x10GetAgentResponse\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x03 \x01(\t\x12\x16\n\x0elatest_version\x18\x04 \x01(\x05\x12\x15\n\rmanifest_yaml\x18\x05 \x01(\t\"l\n\x19GenerateCompletionRequest\x12\r\n\x05model\x18\x01 \x01(\t\x12\"\n\x08messages\x18\x02 \x03(\x0b\x32\x10.agentos.Message\x12\x1c\n\x05tools\x18\x03 \x03(\x0b\x32\r.agentos.Tool\"T\n\x1aGenerateCompletionResponse\x12\x0f\n\x07\x63ontent\x18\x01 \x01(\t\x12%\n\ntool_calls\x18\x02 \x03(\x0b\x32\x11.agentos.ToolCall\"#\n\x13GetEmbeddingRequest\x12\x0c\n\x04text\x18\x01 \x01(\t\")\n\x14GetEmbeddingResponse\x12\x11\n\tembedding\x18\x01 \x03(\x02\"3\n\x11SaveMemoryRequest\x12\x10\n\x08\x61gent_id\x18\x01 \x01(\t\x12\x0c\n\x04text\x18\x02 \x01(\t\"$\n\x12SaveMemoryResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\"E\n\x13SearchMemoryRequest\x12\x10\n\x08\x61gent_id\x18\x01 \x01(\t\x12\r\n\x05query\x18\x02 \x01(\t\x12\r\n\x05limit\x18\x03 \x01(\x05\"=\n\x14SearchMemoryResponse\x12%\n\x07results\x18\x01 \x03(\x0b\x32\x14.agentos.MemoryMatch\"%\n\x12\x45xecuteTaskRequest\x12\x0f\n\x07task_id\x18\x01 \x01(\t\"U\n\x13\x45xecuteTaskResponse\x12\x0f\n\x07task_id\x18\x01 \x01(\t\x12\x0e\n\x06status\x18\x02 \x01(\t\x12\x0e\n\x06output\x18\x03 \x01(\t\x12\r\n\x05\x65rror\x18\x04 \x01(\t2\xa7\x01\n\x14\x41gentRegistryService\x12N\n\rRegisterAgent\x12\x1d.agentos.RegisterAgentRequest\x1a\x1e.agentos.RegisterAgentResponse\x12?\n\x08GetAgent\x12\x18.agentos.GetAgentRequest\x1a\x19.agentos.GetAgentResponse2\xbf\x01\n\x11LLMGatewayService\x12]\n\x12GenerateCompletion\x12\".agentos.GenerateCompletionRequest\x1a#.agentos.GenerateCompletionResponse\x12K\n\x0cGetEmbedding\x12\x1c.agentos.GetEmbeddingRequest\x1a\x1d.agentos.GetEmbeddingResponse2\xa9\x01\n\x13MemoryEngineService\x12\x45\n\nSaveMemory\x12\x1a.agentos.SaveMemoryRequest\x1a\x1b.agentos.SaveMemoryResponse\x12K\n\x0cSearchMemory\x12\x1c.agentos.SearchMemoryRequest\x1a\x1d.agentos.SearchMemoryResponse2_\n\x13\x41gentRuntimeService\x12H\n\x0b\x45xecuteTask\x12\x1b.agentos.ExecuteTaskRequest\x1a\x1c.agentos.ExecuteTaskResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x14protos/agentos.proto\x12\x07\x61gentos\"L\n\x07Message\x12\x0c\n\x04role\x18\x01 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x02 \x01(\t\x12\x14\n\x0ctool_call_id\x18\x03 \x01(\t\x12\x0c\n\x04name\x18\x04 \x01(\t\"B\n\x04Tool\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x02 \x01(\t\x12\x17\n\x0fparameters_json\x18\x03 \x01(\t\"<\n\x08ToolCall\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x16\n\x0e\x61rguments_json\x18\x03 \x01(\t\"C\n\x0bMemoryMatch\x12\x0c\n\x04text\x18\x01 \x01(\t\x12\x12\n\nsimilarity\x18\x02 \x01(\x02\x12\x12\n\ncreated_at\x18\x03 \x01(\t\"-\n\x14RegisterAgentRequest\x12\x15\n\rmanifest_yaml\x18\x01 \x01(\t\"R\n\x15RegisterAgentResponse\x12\n\n\x02id\x18\x02 \x01(\t\x12\x0c\n\x04name\x18\x03 \x01(\t\x12\x0f\n\x07version\x18\x04 \x01(\x05\x12\x0e\n\x06status\x18\x05 \x01(\t\"\x1d\n\x0fGetAgentRequest\x12\n\n\x02id\x18\x01 \x01(\t\"p\n\x10GetAgentResponse\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x03 \x01(\t\x12\x16\n\x0elatest_version\x18\x04 \x01(\x05\x12\x15\n\rmanifest_yaml\x18\x05 \x01(\t\"\x8f\x01\n\x19GenerateCompletionRequest\x12\r\n\x05model\x18\x01 \x01(\t\x12\"\n\x08messages\x18\x02 \x03(\x0b\x32\x10.agentos.Message\x12\x1c\n\x05tools\x18\x03 \x03(\x0b\x32\r.agentos.Tool\x12\x10\n\x08provider\x18\x04 \x01(\t\x12\x0f\n\x07\x61pi_key\x18\x05 \x01(\t\"T\n\x1aGenerateCompletionResponse\x12\x0f\n\x07\x63ontent\x18\x01 \x01(\t\x12%\n\ntool_calls\x18\x02 \x03(\x0b\x32\x11.agentos.ToolCall\"#\n\x13GetEmbeddingRequest\x12\x0c\n\x04text\x18\x01 \x01(\t\")\n\x14GetEmbeddingResponse\x12\x11\n\tembedding\x18\x01 \x03(\x02\"3\n\x11SaveMemoryRequest\x12\x10\n\x08\x61gent_id\x18\x01 \x01(\t\x12\x0c\n\x04text\x18\x02 \x01(\t\"$\n\x12SaveMemoryResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\"E\n\x13SearchMemoryRequest\x12\x10\n\x08\x61gent_id\x18\x01 \x01(\t\x12\r\n\x05query\x18\x02 \x01(\t\x12\r\n\x05limit\x18\x03 \x01(\x05\"=\n\x14SearchMemoryResponse\x12%\n\x07results\x18\x01 \x03(\x0b\x32\x14.agentos.MemoryMatch\"%\n\x12\x45xecuteTaskRequest\x12\x0f\n\x07task_id\x18\x01 \x01(\t\"U\n\x13\x45xecuteTaskResponse\x12\x0f\n\x07task_id\x18\x01 \x01(\t\x12\x0e\n\x06status\x18\x02 \x01(\t\x12\x0e\n\x06output\x18\x03 \x01(\t\x12\r\n\x05\x65rror\x18\x04 \x01(\t2\xa7\x01\n\x14\x41gentRegistryService\x12N\n\rRegisterAgent\x12\x1d.agentos.RegisterAgentRequest\x1a\x1e.agentos.RegisterAgentResponse\x12?\n\x08GetAgent\x12\x18.agentos.GetAgentRequest\x1a\x19.agentos.GetAgentResponse2\xbf\x01\n\x11LLMGatewayService\x12]\n\x12GenerateCompletion\x12\".agentos.GenerateCompletionRequest\x1a#.agentos.GenerateCompletionResponse\x12K\n\x0cGetEmbedding\x12\x1c.agentos.GetEmbeddingRequest\x1a\x1d.agentos.GetEmbeddingResponse2\xa9\x01\n\x13MemoryEngineService\x12\x45\n\nSaveMemory\x12\x1a.agentos.SaveMemoryRequest\x1a\x1b.agentos.SaveMemoryResponse\x12K\n\x0cSearchMemory\x12\x1c.agentos.SearchMemoryRequest\x1a\x1d.agentos.SearchMemoryResponse2_\n\x13\x41gentRuntimeService\x12H\n\x0b\x45xecuteTask\x12\x1b.agentos.ExecuteTaskRequest\x1a\x1c.agentos.ExecuteTaskResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -47,32 +47,32 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_GETAGENTREQUEST']._serialized_end=470
   _globals['_GETAGENTRESPONSE']._serialized_start=472
   _globals['_GETAGENTRESPONSE']._serialized_end=584
-  _globals['_GENERATECOMPLETIONREQUEST']._serialized_start=586
-  _globals['_GENERATECOMPLETIONREQUEST']._serialized_end=694
-  _globals['_GENERATECOMPLETIONRESPONSE']._serialized_start=696
-  _globals['_GENERATECOMPLETIONRESPONSE']._serialized_end=780
-  _globals['_GETEMBEDDINGREQUEST']._serialized_start=782
-  _globals['_GETEMBEDDINGREQUEST']._serialized_end=817
-  _globals['_GETEMBEDDINGRESPONSE']._serialized_start=819
-  _globals['_GETEMBEDDINGRESPONSE']._serialized_end=860
-  _globals['_SAVEMEMORYREQUEST']._serialized_start=862
-  _globals['_SAVEMEMORYREQUEST']._serialized_end=913
-  _globals['_SAVEMEMORYRESPONSE']._serialized_start=915
-  _globals['_SAVEMEMORYRESPONSE']._serialized_end=951
-  _globals['_SEARCHMEMORYREQUEST']._serialized_start=953
-  _globals['_SEARCHMEMORYREQUEST']._serialized_end=1022
-  _globals['_SEARCHMEMORYRESPONSE']._serialized_start=1024
-  _globals['_SEARCHMEMORYRESPONSE']._serialized_end=1085
-  _globals['_EXECUTETASKREQUEST']._serialized_start=1087
-  _globals['_EXECUTETASKREQUEST']._serialized_end=1124
-  _globals['_EXECUTETASKRESPONSE']._serialized_start=1126
-  _globals['_EXECUTETASKRESPONSE']._serialized_end=1211
-  _globals['_AGENTREGISTRYSERVICE']._serialized_start=1214
-  _globals['_AGENTREGISTRYSERVICE']._serialized_end=1381
-  _globals['_LLMGATEWAYSERVICE']._serialized_start=1384
-  _globals['_LLMGATEWAYSERVICE']._serialized_end=1575
-  _globals['_MEMORYENGINESERVICE']._serialized_start=1578
-  _globals['_MEMORYENGINESERVICE']._serialized_end=1747
-  _globals['_AGENTRUNTIMESERVICE']._serialized_start=1749
-  _globals['_AGENTRUNTIMESERVICE']._serialized_end=1844
+  _globals['_GENERATECOMPLETIONREQUEST']._serialized_start=587
+  _globals['_GENERATECOMPLETIONREQUEST']._serialized_end=730
+  _globals['_GENERATECOMPLETIONRESPONSE']._serialized_start=732
+  _globals['_GENERATECOMPLETIONRESPONSE']._serialized_end=816
+  _globals['_GETEMBEDDINGREQUEST']._serialized_start=818
+  _globals['_GETEMBEDDINGREQUEST']._serialized_end=853
+  _globals['_GETEMBEDDINGRESPONSE']._serialized_start=855
+  _globals['_GETEMBEDDINGRESPONSE']._serialized_end=896
+  _globals['_SAVEMEMORYREQUEST']._serialized_start=898
+  _globals['_SAVEMEMORYREQUEST']._serialized_end=949
+  _globals['_SAVEMEMORYRESPONSE']._serialized_start=951
+  _globals['_SAVEMEMORYRESPONSE']._serialized_end=987
+  _globals['_SEARCHMEMORYREQUEST']._serialized_start=989
+  _globals['_SEARCHMEMORYREQUEST']._serialized_end=1058
+  _globals['_SEARCHMEMORYRESPONSE']._serialized_start=1060
+  _globals['_SEARCHMEMORYRESPONSE']._serialized_end=1121
+  _globals['_EXECUTETASKREQUEST']._serialized_start=1123
+  _globals['_EXECUTETASKREQUEST']._serialized_end=1160
+  _globals['_EXECUTETASKRESPONSE']._serialized_start=1162
+  _globals['_EXECUTETASKRESPONSE']._serialized_end=1247
+  _globals['_AGENTREGISTRYSERVICE']._serialized_start=1250
+  _globals['_AGENTREGISTRYSERVICE']._serialized_end=1417
+  _globals['_LLMGATEWAYSERVICE']._serialized_start=1420
+  _globals['_LLMGATEWAYSERVICE']._serialized_end=1611
+  _globals['_MEMORYENGINESERVICE']._serialized_start=1614
+  _globals['_MEMORYENGINESERVICE']._serialized_end=1783
+  _globals['_AGENTRUNTIMESERVICE']._serialized_start=1785
+  _globals['_AGENTRUNTIMESERVICE']._serialized_end=1880
 # @@protoc_insertion_point(module_scope)

@@ -91,11 +91,17 @@ class AgentRuntime:
                     limit=manifest.memory.context_window_limit
                 )
 
+                # Read dynamic user credentials from task if populated
+                provider = getattr(task, 'llm_provider', '')
+                api_key = getattr(task, 'llm_api_key', '')
+
                 # Inference call
                 response = self.llm_gateway.generate_chat_completion(
                     model=manifest.model,
                     messages=active_context,
-                    tools=llm_tools if llm_tools else None
+                    tools=llm_tools if llm_tools else None,
+                    provider=provider if provider else None,
+                    api_key=api_key if api_key else None
                 )
 
                 # Track token budget (simplified tracking for Milestone 1)

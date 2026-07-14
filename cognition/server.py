@@ -45,10 +45,14 @@ class LLMGatewayService(pb2_grpc.LLMGatewayServiceServicer):
             })
             
         try:
+            provider = getattr(request, "provider", "")
+            api_key = getattr(request, "api_key", "")
             response = self.gateway.generate_chat_completion(
                 model=request.model,
                 messages=messages,
-                tools=tools if tools else None
+                tools=tools if tools else None,
+                provider=provider if provider else None,
+                api_key=api_key if api_key else None
             )
             
             # Map LLMResponse back to gRPC response message

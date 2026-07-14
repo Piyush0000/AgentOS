@@ -25,8 +25,8 @@ class gRPCLLMGatewayProxy:
     def __init__(self, target="localhost:50051"):
         self.target = target
 
-    def generate_chat_completion(self, model: str, messages: list, tools: list = None):
-        logger.info(f"Forwarding generate_chat_completion to Cognition Server at {self.target}")
+    def generate_chat_completion(self, model: str, messages: list, tools: list = None, provider: str = None, api_key: str = None):
+        logger.info(f"Forwarding generate_chat_completion to Cognition Server at {self.target} (provider: {provider})")
         
         # Build gRPC messages
         grpc_msgs = []
@@ -54,7 +54,9 @@ class gRPCLLMGatewayProxy:
                 req = pb2.GenerateCompletionRequest(
                     model=model,
                     messages=grpc_msgs,
-                    tools=grpc_tools
+                    tools=grpc_tools,
+                    provider=provider or "",
+                    api_key=api_key or ""
                 )
                 response = stub.GenerateCompletion(req, timeout=60.0)
                 

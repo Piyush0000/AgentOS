@@ -167,6 +167,14 @@ const Task = sequelize.define('Task', {
     type: DataTypes.TEXT,
     allowNull: true
   },
+  llm_provider: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  llm_api_key: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
   created_at: {
     type: DataTypes.DATE,
     defaultValue: Sequelize.NOW

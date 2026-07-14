@@ -70,6 +70,8 @@ message GenerateCompletionRequest {
   string model = 1;
   repeated Message messages = 2;
   repeated Tool tools = 3;
+  string provider = 4;
+  string api_key = 5;
 }
 
 message GenerateCompletionResponse {

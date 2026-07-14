@@ -50,19 +50,36 @@ class LLMGateway:
         self, 
         model: str, 
         messages: List[Dict[str, Any]], 
-        tools: Optional[List[Dict[str, Any]]] = None
+        tools: Optional[List[Dict[str, Any]]] = None,
+        provider: Optional[str] = None,
+        api_key: Optional[str] = None
     ) -> LLMResponse:
-        logger.info(f"LLM request to model={model} with {len(messages)} messages")
+        logger.info(f"LLM request to model={model} (provider: {provider}) with {len(messages)} messages")
         
+        # Override configuration dynamically if custom keys are passed from client
+        if provider == "gemini" and api_key:
+            try:
+                import google.generativeai as genai
+                genai.configure(api_key=api_key)
+                self.gemini_client = genai
+                model = "gemini-1.5-flash"
+            except Exception as e:
+                logger.error(f"Failed to configure custom Gemini key: {e}")
+        elif provider == "mistral" and api_key:
+            self.mistral_api_key = api_key
+            model = "open-mistral-7b"
+
         # Determine provider
         if (model.startswith("gpt") or model.startswith("o1") or model.startswith("o3")) and self.openai_client:
             return self._call_openai(model, messages, tools)
         elif model.startswith("claude") and self.anthropic_client:
             return self._call_anthropic(model, messages, tools)
-        elif model.startswith("gemini") and self.gemini_client:
-            return self._call_gemini(model, messages, tools)
-        elif model.startswith("mistral") and self.mistral_api_key:
-            return self._call_mistral(model, messages, tools)
+        elif (model.startswith("gemini") or provider == "gemini") and self.gemini_client:
+            gemini_model = model if model.startswith("gemini") else "gemini-1.5-flash"
+            return self._call_gemini(gemini_model, messages, tools)
+        elif (model.startswith("mistral") or provider == "mistral") and self.mistral_api_key:
+            mistral_model = model if model.startswith("mistral") else "open-mistral-7b"
+            return self._call_mistral(mistral_model, messages, tools)
         else:
             # Fallback to mock or first available configured client
             if self.openai_client:
