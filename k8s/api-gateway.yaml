@@ -1,5 +1,5 @@
 # ========================================================
-# API Gateway & Dashboard Deployment
+# 1. Express API Gateway Service & Deployment (Port 8000)
 # ========================================================
 apiVersion: apps/v1
 kind: Deployment
@@ -18,8 +18,7 @@ spec:
     spec:
       containers:
       - name: gateway
-        image: us-central1-docker.pkg.dev/your-project-id/agentos/agentos-core:latest
-        command: ["uvicorn", "api.server:app", "--host", "0.0.0.0", "--port", "8000"]
+        image: us-central1-docker.pkg.dev/your-project-id/agentos/agentos-express:latest
         ports:
         - containerPort: 8000
         env:
@@ -28,12 +27,15 @@ spec:
             secretKeyRef:
               name: agentos-secrets
               key: database-url
-        - name: NATS_URL
-          value: "nats://nats:4222"
-        - name: REGISTRY_TARGET
-          value: "registry-plane:50053"
-        - name: MEMORY_TARGET
-          value: "memory-plane:50052"
+        - name: REDIS_URL
+          value: "redis://redis:6379"
+        - name: RUNTIME_TARGET
+          value: "runtime-plane:50054"
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: agentos-secrets
+              key: jwt-secret
         resources:
           limits:
             cpu: "500m"
@@ -42,9 +44,6 @@ spec:
             cpu: "100m"
             memory: "256Mi"
 ---
-# ========================================================
-# Public LoadBalancer Service for Web UI / Dashboard
-# ========================================================
 apiVersion: v1
 kind: Service
 metadata:
@@ -56,5 +55,54 @@ spec:
     app: api-gateway
   ports:
   - name: http
-    port: 80
+    port: 8000
     targetPort: 8000
+---
+
+# ========================================================
+# 2. Next.js Frontend Client Service & Deployment (Port 80)
+# ========================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-client
+  namespace: agentos
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web-client
+  template:
+    metadata:
+      labels:
+        app: web-client
+    spec:
+      containers:
+      - name: web
+        image: us-central1-docker.pkg.dev/your-project-id/agentos/agentos-web:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NEXT_PUBLIC_API_URL
+          value: "http://<YOUR_API_GATEWAY_LOADBALANCER_IP>:8000"
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-client
+  namespace: agentos
+spec:
+  type: LoadBalancer
+  selector:
+    app: web-client
+  ports:
+  - name: http
+    port: 80
+    targetPort: 3000

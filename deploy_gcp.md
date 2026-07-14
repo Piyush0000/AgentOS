@@ -1,6 +1,6 @@
 # Deploying AgentOS on Google Cloud Platform (GCP)
 
-This guide walks you through deploying the production-ready AgentOS distributed microservices cluster onto **Google Kubernetes Engine (GKE)** with **Google Cloud SQL (PostgreSQL)** and **Google Artifact Registry (GAR)**.
+This guide walks you through deploying the production-ready AgentOS distributed microservices cluster onto **Google Kubernetes Engine (GKE)** with **Google Cloud SQL (PostgreSQL)**, **Google Artifact Registry (GAR)**, and **Redis**.
 
 ---
 
@@ -8,18 +8,23 @@ This guide walks you through deploying the production-ready AgentOS distributed 
 
 ```mermaid
 graph TD
-    Client[Web Browser / API Client] -->|HTTP Port 80| LoadBalancer[Google Cloud Load Balancer]
-    LoadBalancer -->|Port 8000| Gateway[API Gateway Pods]
-    Gateway -->|gRPC| Registry[Registry Plane Pods]
-    Gateway -->|gRPC| Memory[Memory Plane Pods]
-    Worker[Worker Daemon Pods] -->|gRPC| Runtime[Runtime Plane Pods]
-    Runtime -->|gRPC| Cognition[Cognition Plane Pods]
-    Memory -->|gRPC| Cognition
+    Client[Web Browser / API Client] -->|HTTP Port 80| LBFrontend[GCP Frontend Load Balancer]
+    LBFrontend -->|Port 3000| NextJS[Next.js Client Pods]
     
-    Scheduler[Scheduler Daemon] <-->|Pub/Sub Events| NATS[NATS Message Bus Pod]
-    Worker <-->|Pub/Sub Events| NATS
+    NextJS -->|Client-Side Fetch / JWT| LBBackend[GCP Backend Load Balancer]
+    LBBackend -->|Port 8000| ExpressGateway[Express API Gateway Pods]
     
-    Gateway & Registry & Memory & Runtime & Scheduler & Worker --->|SQL| CloudSQL[(Google Cloud SQL PostgreSQL)]
+    ExpressGateway -->|Auth / SQL CRUD| CloudSQL[(Google Cloud SQL PostgreSQL)]
+    ExpressGateway -->|LPUSH Task ID| Redis[Redis Queue Pod]
+    
+    ExpressGateway -->|BRPOP Task worker| Redis
+    ExpressGateway -->|gRPC ExecuteTask| Runtime[Python Runtime Plane Pods]
+    
+    Runtime -->|gRPC GetCompletions| Cognition[Python Cognition Plane Pods]
+    Runtime -->|gRPC GetEmbeddings| Memory[Python Memory Plane Pods]
+    Memory -->|gRPC GetEmbeddings| Cognition
+    
+    Runtime & Cognition & Memory & Registry[Python Registry Plane Pods] --->|SQL Queries| CloudSQL
 ```
 
 ---
@@ -58,14 +63,14 @@ graph TD
        --instance=agentos-db \
        --password=YOUR_SECURE_PASSWORD
    ```
-3. Record the Private/Public Connection IP of your Cloud SQL instance. Your database connection string will look like:
+3. Record the IP address of your Cloud SQL instance. Your database connection string will look like:
    `postgresql://postgres:YOUR_SECURE_PASSWORD@<CLOUDSQL_IP>:5432/agentos`
 
 ---
 
 ## Step 3: Configure Google Artifact Registry (GAR)
 
-1. Create a Docker repository in Artifact Registry to hold your unified AgentOS image:
+1. Create a Docker repository in Artifact Registry to hold your container images:
    ```bash
    gcloud artifacts repositories create agentos \
        --repository-format=docker \
@@ -81,20 +86,30 @@ graph TD
 
 ## Step 4: Build and Push Docker Images
 
-1. Build and tag the unified Docker container:
-   ```bash
-   docker build -t us-central1-docker.pkg.dev/<YOUR_PROJECT_ID>/agentos/agentos-core:latest .
-   ```
-2. Push the tagged image to your Google Artifact Registry:
-   ```bash
-   docker push us-central1-docker.pkg.dev/<YOUR_PROJECT_ID>/agentos/agentos-core:latest
-   ```
+AgentOS now utilizes three distinct container images. Build and tag them as follows (replacing `<YOUR_PROJECT_ID>` with your actual GCP Project ID):
 
-*Note: If you change your project ID or repository path, remember to update the `image:` paths in [k8s/planes.yaml](file:///d:/agentOS/k8s/planes.yaml), [k8s/daemons.yaml](file:///d:/agentOS/k8s/daemons.yaml), and [k8s/api-gateway.yaml](file:///d:/agentOS/k8s/api-gateway.yaml).*
+1.  **Build AgentOS Core (Python Planes)**:
+    ```bash
+    docker build -t us-central1-docker.pkg.dev/<YOUR_PROJECT_ID>/agentos/agentos-core:latest .
+    ```
+2.  **Build Express API Gateway**:
+    ```bash
+    docker build -t us-central1-docker.pkg.dev/<YOUR_PROJECT_ID>/agentos/agentos-express:latest ./server-node
+    ```
+3.  **Build Next.js Frontend Dashboard**:
+    ```bash
+    docker build -t us-central1-docker.pkg.dev/<YOUR_PROJECT_ID>/agentos/agentos-web:latest ./web
+    ```
+4.  **Push the Images**:
+    ```bash
+    docker push us-central1-docker.pkg.dev/<YOUR_PROJECT_ID>/agentos/agentos-core:latest
+    docker push us-central1-docker.pkg.dev/<YOUR_PROJECT_ID>/agentos/agentos-express:latest
+    docker push us-central1-docker.pkg.dev/<YOUR_PROJECT_ID>/agentos/agentos-web:latest
+    ```
 
 ---
 
-## Step 5: Provision GKE Cluster & Deploy Manifests
+## Step 5: Provision GKE Cluster & Configure Secrets
 
 1. Provision a GKE Kubernetes cluster (3 nodes standard sizing):
    ```bash
@@ -111,38 +126,49 @@ graph TD
    ```bash
    kubectl apply -f k8s/namespace.yaml
    ```
-4. Create the Kubernetes Secrets holding your database connection string and LLM API credentials:
+4. Create the Kubernetes Secrets holding your connection configurations and LLM API credentials:
    ```bash
    kubectl create secret generic agentos-secrets \
        --namespace=agentos \
        --from-literal=database-url="postgresql://postgres:YOUR_SECURE_PASSWORD@<CLOUDSQL_IP>:5432/agentos" \
+       --from-literal=jwt-secret="choose-a-strong-jwt-secret-string" \
        --from-literal=openai-api-key="sk-..." \
        --from-literal=gemini-api-key="AIza..." \
        --from-literal=anthropic-api-key="sk-ant-..."
    ```
-5. Apply the rest of the manifests to spin up NATS, all service planes, and background scheduler/workers:
-   ```bash
-   kubectl apply -f k8s/
-   ```
 
 ---
 
-## Step 6: Verify Deployment & Public Access
+## Step 6: Deploy to GKE & Expose Endpoints
 
-1. Inspect that all pods have spun up successfully:
+1. Apply the NATS and Redis dependency configs:
    ```bash
-   kubectl get pods -n agentos
+   kubectl apply -f k8s/nats.yaml
+   kubectl apply -f k8s/redis.yaml
    ```
-2. Retrieve the public external IP address generated by the Google Cloud Load Balancer:
+2. Apply the Python service planes and background daemons:
    ```bash
-   kubectl get service api-gateway -n agentos
+   kubectl apply -f k8s/planes.yaml
+   kubectl apply -f k8s/daemons.yaml
    ```
-   *Output Example:*
-   ```text
-   NAME          TYPE           CLUSTER-IP    EXTERNAL-IP     PORT(S)        AGE
-   api-gateway   LoadBalancer   10.48.10.85   35.224.12.94    80:8000/TCP    2m
+3. Deploy the Express Gateway and Next.js Frontend:
+   ```bash
+   kubectl apply -f k8s/api-gateway.yaml
    ```
-3. Open your browser and navigate to:
-   `http://<EXTERNAL-IP>` (e.g. `http://35.224.12.94`)
-   
-Your AgentOS Observability Dashboard is now live and fully operational on Google Cloud Platform!
+4. **Acquire and link LoadBalancer IP addresses**:
+   *   Run:
+       ```bash
+       kubectl get services -n agentos
+       ```
+   *   Record the `EXTERNAL-IP` of the **`api-gateway`** service (this exposes port 8000).
+   *   Now, update the `NEXT_PUBLIC_API_URL` environment variable inside [k8s/api-gateway.yaml](file:///d:/agentOS/k8s/api-gateway.yaml) under the `web-client` container specification to point to this external gateway URL:
+       `value: "http://<API_GATEWAY_EXTERNAL_IP>:8000"`
+   *   Re-apply the API Gateway configuration so the Next.js client knows where to send API requests:
+       ```bash
+       kubectl apply -f k8s/api-gateway.yaml
+       ```
+5. Fetch the `EXTERNAL-IP` of the **`web-client`** service:
+   ```bash
+   kubectl get service web-client -n agentos
+   ```
+6. Open your browser and navigate to the external frontend IP to access your secure, live multi-tenant AgentOS Control Plane!
