@@ -509,11 +509,12 @@ export default function Dashboard() {
               lineHeight: 1.5
             }}>
               {!selectedTask ? 'Select a task to inspect state checkpoints.' : (
-                details.checkpoints_count === 0 ? 'No checkpoints saved for this task.' : 
                 `Found ${details.checkpoints_count} checkpoints saved in database storage.\n\n` + 
                 `Task Input: "${details.input}"\n` +
                 `Task Status: ${details.status}\n` +
-                `Last Updated: ${new Date(details.updated_at).toLocaleString()}`
+                `Last Updated: ${new Date(details.updated_at).toLocaleString()}\n\n` +
+                (details.output ? `========================================================\nAGENT OUTPUT RESPONSE:\n========================================================\n${details.output}\n\n` : '') +
+                (details.error ? `========================================================\nERROR DETAILS:\n========================================================\n${details.error}\n\n` : '')
               )}
             </div>
           </div>

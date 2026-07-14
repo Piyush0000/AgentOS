@@ -242,6 +242,8 @@ app.get('/v1/tasks/:taskId', verifyToken, async (req, res) => {
       input: task.input_data,
       status: task.status,
       updated_at: task.updated_at.toISOString(),
+      output: task.output_data,
+      error: task.error_message,
       checkpoints_count: task.checkpoints ? task.checkpoints.length : 0,
       audited_tool_calls: (task.tool_calls || []).map(tc => ({
         tool: tc.tool_name,
