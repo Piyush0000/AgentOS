@@ -69,3 +69,22 @@ class SchedulerDaemon:
             logger.error(f"Error scheduling task {task_id}: {e}")
         finally:
             db.close()
+
+async def main():
+    import os
+    logging.basicConfig(level=logging.INFO)
+    nats_url = os.getenv("NATS_URL", "nats://localhost:4222")
+    event_bus = EventBus(servers=[nats_url])
+    await event_bus.connect()
+    scheduler = SchedulerDaemon(event_bus)
+    await scheduler.start()
+    
+    try:
+        while True:
+            await asyncio.sleep(3600)
+    except KeyboardInterrupt:
+        await event_bus.close()
+        logger.info("Scheduler Daemon stopped.")
+
+if __name__ == "__main__":
+    asyncio.run(main())

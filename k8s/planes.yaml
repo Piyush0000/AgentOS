@@ -7,7 +7,7 @@ metadata:
   name: registry-plane
   namespace: agentos
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: registry-plane
@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: registry
-        image: us-central1-docker.pkg.dev/your-project-id/agentos/agentos-core:latest
+        image: us-central1-docker.pkg.dev/agentos-502419/agentos/agentos-core:latest
         command: ["python", "-m", "core.registry.server"]
         ports:
         - containerPort: 50053
@@ -35,8 +35,8 @@ spec:
             cpu: "500m"
             memory: "512Mi"
           requests:
-            cpu: "100m"
-            memory: "256Mi"
+            cpu: "10m"
+            memory: "64Mi"
 ---
 apiVersion: v1
 kind: Service
@@ -60,7 +60,7 @@ metadata:
   name: cognition-plane
   namespace: agentos
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: cognition-plane
@@ -71,7 +71,7 @@ spec:
     spec:
       containers:
       - name: cognition
-        image: us-central1-docker.pkg.dev/your-project-id/agentos/agentos-core:latest
+        image: us-central1-docker.pkg.dev/agentos-502419/agentos/agentos-core:latest
         command: ["python", "-m", "cognition.server"]
         ports:
         - containerPort: 50051
@@ -106,8 +106,8 @@ spec:
             cpu: "1000m"
             memory: "1024Mi"
           requests:
-            cpu: "200m"
-            memory: "512Mi"
+            cpu: "50m"
+            memory: "128Mi"
 ---
 apiVersion: v1
 kind: Service
@@ -131,7 +131,7 @@ metadata:
   name: memory-plane
   namespace: agentos
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: memory-plane
@@ -142,7 +142,7 @@ spec:
     spec:
       containers:
       - name: memory
-        image: us-central1-docker.pkg.dev/your-project-id/agentos/agentos-core:latest
+        image: us-central1-docker.pkg.dev/agentos-502419/agentos/agentos-core:latest
         command: ["python", "-m", "memory.server"]
         ports:
         - containerPort: 50052
@@ -161,8 +161,8 @@ spec:
             cpu: "500m"
             memory: "512Mi"
           requests:
-            cpu: "100m"
-            memory: "256Mi"
+            cpu: "10m"
+            memory: "64Mi"
 ---
 apiVersion: v1
 kind: Service
@@ -186,7 +186,7 @@ metadata:
   name: runtime-plane
   namespace: agentos
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: runtime-plane
@@ -197,7 +197,7 @@ spec:
     spec:
       containers:
       - name: runtime
-        image: us-central1-docker.pkg.dev/your-project-id/agentos/agentos-core:latest
+        image: us-central1-docker.pkg.dev/agentos-502419/agentos/agentos-core:latest
         command: ["python", "-m", "execution.runtime.server"]
         ports:
         - containerPort: 50054
@@ -216,8 +216,8 @@ spec:
             cpu: "1000m"
             memory: "1024Mi"
           requests:
-            cpu: "250m"
-            memory: "512Mi"
+            cpu: "10m"
+            memory: "64Mi"
 ---
 apiVersion: v1
 kind: Service

@@ -1,0 +1,129 @@
+syntax = "proto3";
+
+package agentos;
+
+// --- Common Message Structures ---
+
+message Message {
+  string role = 1;      // system, user, assistant, tool
+  string content = 2;
+  string tool_call_id = 3; // optional, for tool role
+  string name = 4;         // optional, for tool role
+}
+
+message Tool {
+  string name = 1;
+  string description = 2;
+  string parameters_json = 3; // JSON schema representing tool parameters
+}
+
+message ToolCall {
+  string id = 1;
+  string name = 2;
+  string arguments_json = 3; // JSON args passed to the tool
+}
+
+message MemoryMatch {
+  string text = 1;
+  float similarity = 2;
+  string created_at = 3;
+}
+
+// --- Agent Registry Service ---
+
+service AgentRegistryService {
+  rpc RegisterAgent (RegisterAgentRequest) returns (RegisterAgentResponse);
+  rpc GetAgent (GetAgentRequest) returns (GetAgentResponse);
+}
+
+message RegisterAgentRequest {
+  string manifest_yaml = 1;
+}
+
+message RegisterAgentResponse {
+  string id = 2;
+  string name = 3;
+  int32 version = 4;
+  string status = 5;
+}
+
+message GetAgentRequest {
+  string id = 1;
+}
+
+message GetAgentResponse {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  int32 latest_version = 4;
+  string manifest_yaml = 5;
+}
+
+// --- LLM Gateway Service ---
+
+service LLMGatewayService {
+  rpc GenerateCompletion (GenerateCompletionRequest) returns (GenerateCompletionResponse);
+  rpc GetEmbedding (GetEmbeddingRequest) returns (GetEmbeddingResponse);
+}
+
+message GenerateCompletionRequest {
+  string model = 1;
+  repeated Message messages = 2;
+  repeated Tool tools = 3;
+}
+
+message GenerateCompletionResponse {
+  string content = 1;
+  repeated ToolCall tool_calls = 2;
+}
+
+message GetEmbeddingRequest {
+  string text = 1;
+}
+
+message GetEmbeddingResponse {
+  repeated float embedding = 1;
+}
+
+// --- Memory Engine Service ---
+
+service MemoryEngineService {
+  rpc SaveMemory (SaveMemoryRequest) returns (SaveMemoryResponse);
+  rpc SearchMemory (SearchMemoryRequest) returns (SearchMemoryResponse);
+}
+
+message SaveMemoryRequest {
+  string agent_id = 1;
+  string text = 2;
+}
+
+message SaveMemoryResponse {
+  string status = 1;
+}
+
+message SearchMemoryRequest {
+  string agent_id = 1;
+  string query = 2;
+  int32 limit = 3;
+}
+
+message SearchMemoryResponse {
+  repeated MemoryMatch results = 1;
+}
+
+// --- Agent Runtime Service ---
+
+service AgentRuntimeService {
+  rpc ExecuteTask (ExecuteTaskRequest) returns (ExecuteTaskResponse);
+}
+
+message ExecuteTaskRequest {
+  string task_id = 1;
+}
+
+message ExecuteTaskResponse {
+  string task_id = 1;
+  string status = 2;
+  string output = 3;
+  string error = 4;
+}

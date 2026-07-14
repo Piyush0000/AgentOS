@@ -37,7 +37,7 @@ const redisPub = new Redis(REDIS_URL); // Separate client for pushing
 // --------------------------------------------------------
 // gRPC Protobuf Setup
 // --------------------------------------------------------
-const protoPath = path.join(__dirname, '..', 'protos', 'agentos.proto');
+const protoPath = path.join(__dirname, 'protos', 'agentos.proto');
 console.log(`Loading gRPC proto from: ${protoPath}`);
 const packageDefinition = protoLoader.loadSync(protoPath, {
   keepCase: true,

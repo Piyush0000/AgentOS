@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: scheduler
-        image: us-central1-docker.pkg.dev/your-project-id/agentos/agentos-core:latest
+        image: us-central1-docker.pkg.dev/agentos-502419/agentos/agentos-core:latest
         command: ["python", "-m", "core.scheduler.scheduler"]
         env:
         - name: DATABASE_URL
@@ -33,8 +33,8 @@ spec:
             cpu: "250m"
             memory: "256Mi"
           requests:
-            cpu: "50m"
-            memory: "128Mi"
+            cpu: "10m"
+            memory: "64Mi"
 ---
 
 # ========================================================
@@ -46,7 +46,7 @@ metadata:
   name: worker-daemon
   namespace: agentos
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: worker-daemon
@@ -57,7 +57,7 @@ spec:
     spec:
       containers:
       - name: worker
-        image: us-central1-docker.pkg.dev/your-project-id/agentos/agentos-core:latest
+        image: us-central1-docker.pkg.dev/agentos-502419/agentos/agentos-core:latest
         command: ["python", "-m", "execution.worker_daemon"]
         env:
         - name: DATABASE_URL
@@ -74,5 +74,5 @@ spec:
             cpu: "500m"
             memory: "512Mi"
           requests:
-            cpu: "100m"
-            memory: "256Mi"
+            cpu: "10m"
+            memory: "64Mi"

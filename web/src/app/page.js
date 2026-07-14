@@ -525,7 +525,7 @@ export default function Dashboard() {
           }}>
             {`[01:34:10] INFO: AgentOS Distributed Plane initialized on ports 50051-50054.\n` +
              `[01:34:11] WARNING: NATS server offline. Switched to shared In-Memory Event Bus loop.\n` +
-             `[01:34:12] INFO: Redis Queue Connection successful at ${REDIS_URL}.\n` +
+             `[01:34:12] INFO: Redis Queue Connection successful at redis://redis:6379.\n` +
              `[01:34:13] INFO: Redis Worker Daemon running in background thread.\n` +
              `[01:34:15] INFO: Registry registered manifest 'security-ops-agent' version 1.\n` +
              (selectedTask ? `[01:34:16] INFO: Dequeued task ${selectedTask}. Sent to gRPC worker dispatcher.\n` +

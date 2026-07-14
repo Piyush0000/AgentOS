@@ -47,24 +47,13 @@ graph TD
 
 ---
 
-## Step 2: Provision Google Cloud SQL (PostgreSQL)
+## Step 2: Configure Free In-Cluster PostgreSQL Database
 
-1. Create a Cloud SQL for PostgreSQL instance:
-   ```bash
-   gcloud sql instances create agentos-db \
-       --database-version=POSTGRES_15 \
-       --tier=db-custom-1-3840 \
-       --region=us-central1
-   ```
-2. Create a database named `agentos` and set a secure user password:
-   ```bash
-   gcloud sql databases create agentos --instance=agentos-db
-   gcloud sql users set-password postgres \
-       --instance=agentos-db \
-       --password=YOUR_SECURE_PASSWORD
-   ```
-3. Record the IP address of your Cloud SQL instance. Your database connection string will look like:
-   `postgresql://postgres:YOUR_SECURE_PASSWORD@<CLOUDSQL_IP>:5432/agentos`
+To keep your GCP bill at absolute zero, we will run PostgreSQL directly inside your GKE cluster instead of provisioning a paid Cloud SQL instance. This runs as a container sharing your node disk space for free.
+
+1.  The configuration for running PostgreSQL in-cluster is located in [postgres.yaml](file:///d:/agentOS/k8s/postgres.yaml).
+2.  Our database connection string will point to the internal Kubernetes service DNS:
+    `postgresql://postgres:postgrespassword@postgres:5432/agentos`
 
 ---
 
@@ -111,26 +100,27 @@ AgentOS now utilizes three distinct container images. Build and tag them as foll
 
 ## Step 5: Provision GKE Cluster & Configure Secrets
 
-1. Provision a GKE Kubernetes cluster (3 nodes standard sizing):
+1. Provision a GKE Kubernetes cluster configured with **1 single node** and a small machine type to save resources:
    ```bash
    gcloud container clusters create agentos-cluster \
-       --region=us-central1 \
-       --num-nodes=3 \
-       --machine-type=e2-standard-2
+       --zone=us-central1-a \
+       --num-nodes=1 \
+       --machine-type=e2-medium \
+       --disk-size=30
    ```
 2. Acquire GKE cluster credentials for `kubectl`:
    ```bash
-   gcloud container clusters get-credentials agentos-cluster --region=us-central1
+   gcloud container clusters get-credentials agentos-cluster --zone=us-central1-a
    ```
 3. Create the `agentos` namespace:
    ```bash
    kubectl apply -f k8s/namespace.yaml
    ```
-4. Create the Kubernetes Secrets holding your connection configurations and LLM API credentials:
+4. Create the Kubernetes Secrets holding your database connection string and LLM API credentials:
    ```bash
    kubectl create secret generic agentos-secrets \
        --namespace=agentos \
-       --from-literal=database-url="postgresql://postgres:YOUR_SECURE_PASSWORD@<CLOUDSQL_IP>:5432/agentos" \
+       --from-literal=database-url="postgresql://postgres:postgrespassword@postgres:5432/agentos" \
        --from-literal=jwt-secret="choose-a-strong-jwt-secret-string" \
        --from-literal=openai-api-key="sk-..." \
        --from-literal=gemini-api-key="AIza..." \
@@ -141,8 +131,9 @@ AgentOS now utilizes three distinct container images. Build and tag them as foll
 
 ## Step 6: Deploy to GKE & Expose Endpoints
 
-1. Apply the NATS and Redis dependency configs:
+1. Apply the PostgreSQL, NATS, and Redis dependency configs:
    ```bash
+   kubectl apply -f k8s/postgres.yaml
    kubectl apply -f k8s/nats.yaml
    kubectl apply -f k8s/redis.yaml
    ```
