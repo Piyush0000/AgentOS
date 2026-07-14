@@ -28,6 +28,18 @@ class AgentVersionTable(Base):
     
     manifest = relationship("AgentManifestTable", back_populates="versions")
 
+class UserTable(Base):
+    __tablename__ = 'users'
+    
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    name = Column(String, nullable=False)
+    email = Column(String, unique=True, nullable=False)
+    password_hash = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    
+    instances = relationship("AgentInstanceTable", back_populates="user")
+    tasks = relationship("TaskTable", back_populates="user")
+
 class AgentInstanceTable(Base):
     __tablename__ = 'agent_instances'
     
@@ -35,17 +47,20 @@ class AgentInstanceTable(Base):
     manifest_id = Column(String, ForeignKey('agent_manifests.id'), nullable=False)
     version = Column(Integer, nullable=False)
     status = Column(String, default='REGISTERED')  # REGISTERED, INITIALIZING, RUNNING, SLEEPING, TERMINATED
+    user_id = Column(String, ForeignKey('users.id'), nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
     
     manifest = relationship("AgentManifestTable", back_populates="instances")
     tasks = relationship("TaskTable", back_populates="instance")
+    user = relationship("UserTable", back_populates="instances")
 
 class TaskTable(Base):
     __tablename__ = 'tasks'
     
     id = Column(String, primary_key=True, default=lambda: f"task_{uuid.uuid4().hex[:8]}")
     instance_id = Column(String, ForeignKey('agent_instances.id'), nullable=False)
+    user_id = Column(String, ForeignKey('users.id'), nullable=True)
     input_data = Column(Text, nullable=False)
     status = Column(String, default='QUEUED')  # QUEUED, RUNNING, COMPLETED, FAILED
     priority = Column(String, default='medium')  # low, medium, high
@@ -58,6 +73,7 @@ class TaskTable(Base):
     
     instance = relationship("AgentInstanceTable", back_populates="tasks")
     checkpoints = relationship("CheckpointTable", back_populates="task")
+    user = relationship("UserTable", back_populates="tasks")
     tool_calls = relationship("ToolCallTable", back_populates="task")
 
 class CheckpointTable(Base):
@@ -96,8 +112,12 @@ class SemanticMemoryTable(Base):
 
 
 # DB engine helper
-DB_URL = "sqlite:///./agentos.db"
-engine = create_engine(DB_URL, connect_args={"check_same_thread": False})
+import os
+DB_URL = os.getenv("DATABASE_URL", "sqlite:///./agentos.db")
+if DB_URL.startswith("sqlite"):
+    engine = create_engine(DB_URL, connect_args={"check_same_thread": False})
+else:
+    engine = create_engine(DB_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def init_db():

@@ -42,7 +42,8 @@ class CognitionGatewayClientProxy:
 class MemoryEngineService(pb2_grpc.MemoryEngineServiceServicer):
     def __init__(self):
         # Initialize MemoryEngine using the Cognition client proxy
-        proxy = CognitionGatewayClientProxy()
+        cognition_target = os.getenv("COGNITION_TARGET", "localhost:50051")
+        proxy = CognitionGatewayClientProxy(channel_target=cognition_target)
         self.engine = MemoryEngine(llm_gateway=proxy)
 
     def SaveMemory(self, request, context):

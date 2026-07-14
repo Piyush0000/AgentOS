@@ -1,0 +1,80 @@
+:root {
+  --bg-base: #fffaf5;
+  --bg-surface: rgba(255, 255, 255, 0.85);
+  --bg-card: rgba(255, 255, 255, 0.95);
+  --border-color: rgba(249, 115, 22, 0.12);
+  --color-primary: #ea580c;
+  --color-accent: #f97316;
+  --color-accent-light: #ffedd5;
+  --color-success: #16a34a;
+  --color-danger: #dc2626;
+  --color-warning: #d97706;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --shadow-soft: 0 10px 30px -10px rgba(249, 115, 22, 0.08);
+  --shadow-hover: 0 15px 35px -5px rgba(249, 115, 22, 0.15);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background-color: var(--bg-base);
+  background-image: radial-gradient(circle at top right, rgba(253, 186, 116, 0.15), transparent 600px),
+                    radial-gradient(circle at bottom left, rgba(254, 215, 170, 0.1), transparent 500px);
+  color: var(--text-main);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+/* Glassmorphism Header */
+header {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-color);
+  padding: 1rem 2.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.05);
+}
+
+/* Common Layout */
+main {
+  padding: 2rem;
+  max-width: 1600px;
+  width: 100%;
+  margin: 0 auto;
+  flex-grow: 1;
+}
+
+/* Scrollbar Customization */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.02);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(234, 88, 12, 0.25);
+  border-radius: 4px;
+}
+
+/* Loader Spin Animation */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}

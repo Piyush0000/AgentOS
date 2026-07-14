@@ -64,7 +64,8 @@ class WorkerDaemon:
 async def main():
     event_bus = EventBus()
     await event_bus.connect()
-    worker = WorkerDaemon(event_bus)
+    runtime_target = os.getenv("RUNTIME_TARGET", "localhost:50054")
+    worker = WorkerDaemon(event_bus, runtime_target=runtime_target)
     await worker.start()
     
     # Keep running

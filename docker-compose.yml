@@ -1,0 +1,130 @@
+version: '3.8'
+
+services:
+  # Redis Queue & Cache
+  redis:
+    image: redis:7-alpine
+    container_name: agentos-redis
+    ports:
+      - "6379:6379"
+
+  # NATS Message Bus (Optional/Legacy support)
+  nats:
+    image: nats:2.9.22-alpine
+    container_name: agentos-nats
+    ports:
+      - "4222:4222"
+
+  # Production Relational Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: agentos-postgres
+    environment:
+      POSTGRES_DB: agentos
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # Registry Plane Server (Port 50053)
+  registry-plane:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: agentos-registry-plane
+    command: python -m core.registry.server
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgrespassword@postgres:5432/agentos
+      - NATS_URL=nats://nats:4222
+    depends_on:
+      - postgres
+    ports:
+      - "50053:50053"
+
+  # Cognition Plane Server (Port 50051)
+  cognition-plane:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: agentos-cognition-plane
+    command: python -m cognition.server
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgrespassword@postgres:5432/agentos
+      - NATS_URL=nats://nats:4222
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    depends_on:
+      - postgres
+    ports:
+      - "50051:50051"
+
+  # Memory Plane Server (Port 50052)
+  memory-plane:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: agentos-memory-plane
+    command: python -m memory.server
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgrespassword@postgres:5432/agentos
+      - NATS_URL=nats://nats:4222
+      - COGNITION_TARGET=cognition-plane:50051
+    depends_on:
+      - postgres
+      - cognition-plane
+    ports:
+      - "50052:50052"
+
+  # Runtime Plane Server (Port 50054)
+  runtime-plane:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: agentos-runtime-plane
+    command: python -m execution.runtime.server
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgrespassword@postgres:5432/agentos
+      - NATS_URL=nats://nats:4222
+      - COGNITION_TARGET=cognition-plane:50051
+    depends_on:
+      - postgres
+      - cognition-plane
+    ports:
+      - "50054:50054"
+
+  # Node/Express API Gateway with Auth and Redis Queue Worker (Port 8000)
+  api-gateway:
+    build:
+      context: ./server-node
+      dockerfile: Dockerfile
+    container_name: agentos-api-gateway
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgrespassword@postgres:5432/agentos
+      - REDIS_URL=redis://redis:6379
+      - RUNTIME_TARGET=runtime-plane:50054
+      - JWT_SECRET=agentos-secret-key-12345
+    depends_on:
+      - postgres
+      - redis
+      - runtime-plane
+    ports:
+      - "8000:8000"
+
+  # Next.js Web Dashboard Client (Port 3000)
+  web-client:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: agentos-web-client
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - api-gateway
+    ports:
+      - "3000:3000"
+
+volumes:
+  pgdata:

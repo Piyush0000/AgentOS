@@ -1,0 +1,232 @@
+# ========================================================
+# 1. Registry Plane Service & Deployment
+# ========================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: registry-plane
+  namespace: agentos
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: registry-plane
+  template:
+    metadata:
+      labels:
+        app: registry-plane
+    spec:
+      containers:
+      - name: registry
+        image: us-central1-docker.pkg.dev/your-project-id/agentos/agentos-core:latest
+        command: ["python", "-m", "core.registry.server"]
+        ports:
+        - containerPort: 50053
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: agentos-secrets
+              key: database-url
+        - name: NATS_URL
+          value: "nats://nats:4222"
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: registry-plane
+  namespace: agentos
+spec:
+  selector:
+    app: registry-plane
+  ports:
+  - port: 50053
+    targetPort: 50053
+---
+
+# ========================================================
+# 2. Cognition Plane Service & Deployment
+# ========================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cognition-plane
+  namespace: agentos
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cognition-plane
+  template:
+    metadata:
+      labels:
+        app: cognition-plane
+    spec:
+      containers:
+      - name: cognition
+        image: us-central1-docker.pkg.dev/your-project-id/agentos/agentos-core:latest
+        command: ["python", "-m", "cognition.server"]
+        ports:
+        - containerPort: 50051
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: agentos-secrets
+              key: database-url
+        - name: NATS_URL
+          value: "nats://nats:4222"
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: agentos-secrets
+              key: openai-api-key
+              optional: true
+        - name: GEMINI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: agentos-secrets
+              key: gemini-api-key
+              optional: true
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: agentos-secrets
+              key: anthropic-api-key
+              optional: true
+        resources:
+          limits:
+            cpu: "1000m"
+            memory: "1024Mi"
+          requests:
+            cpu: "200m"
+            memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cognition-plane
+  namespace: agentos
+spec:
+  selector:
+    app: cognition-plane
+  ports:
+  - port: 50051
+    targetPort: 50051
+---
+
+# ========================================================
+# 3. Memory Plane Service & Deployment
+# ========================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: memory-plane
+  namespace: agentos
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: memory-plane
+  template:
+    metadata:
+      labels:
+        app: memory-plane
+    spec:
+      containers:
+      - name: memory
+        image: us-central1-docker.pkg.dev/your-project-id/agentos/agentos-core:latest
+        command: ["python", "-m", "memory.server"]
+        ports:
+        - containerPort: 50052
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: agentos-secrets
+              key: database-url
+        - name: NATS_URL
+          value: "nats://nats:4222"
+        - name: COGNITION_TARGET
+          value: "cognition-plane:50051"
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: memory-plane
+  namespace: agentos
+spec:
+  selector:
+    app: memory-plane
+  ports:
+  - port: 50052
+    targetPort: 50052
+---
+
+# ========================================================
+# 4. Runtime Plane Service & Deployment
+# ========================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: runtime-plane
+  namespace: agentos
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: runtime-plane
+  template:
+    metadata:
+      labels:
+        app: runtime-plane
+    spec:
+      containers:
+      - name: runtime
+        image: us-central1-docker.pkg.dev/your-project-id/agentos/agentos-core:latest
+        command: ["python", "-m", "execution.runtime.server"]
+        ports:
+        - containerPort: 50054
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: agentos-secrets
+              key: database-url
+        - name: NATS_URL
+          value: "nats://nats:4222"
+        - name: COGNITION_TARGET
+          value: "cognition-plane:50051"
+        resources:
+          limits:
+            cpu: "1000m"
+            memory: "1024Mi"
+          requests:
+            cpu: "250m"
+            memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: runtime-plane
+  namespace: agentos
+spec:
+  selector:
+    app: runtime-plane
+  ports:
+  - port: 50054
+    targetPort: 50054

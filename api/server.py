@@ -36,8 +36,8 @@ app = FastAPI(
 templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "templates"))
 
 # Configuration for gRPC targets
-REGISTRY_TARGET = "localhost:50053"
-MEMORY_TARGET = "localhost:50052"
+REGISTRY_TARGET = os.getenv("REGISTRY_TARGET", "localhost:50053")
+MEMORY_TARGET = os.getenv("MEMORY_TARGET", "localhost:50052")
 
 # Event Bus and Workflow Engine setup
 event_bus = EventBus()

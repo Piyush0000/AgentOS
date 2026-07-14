@@ -1,0 +1,78 @@
+# ========================================================
+# 1. Scheduler Daemon Deployment
+# ========================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scheduler-daemon
+  namespace: agentos
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scheduler-daemon
+  template:
+    metadata:
+      labels:
+        app: scheduler-daemon
+    spec:
+      containers:
+      - name: scheduler
+        image: us-central1-docker.pkg.dev/your-project-id/agentos/agentos-core:latest
+        command: ["python", "-m", "core.scheduler.scheduler"]
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: agentos-secrets
+              key: database-url
+        - name: NATS_URL
+          value: "nats://nats:4222"
+        resources:
+          limits:
+            cpu: "250m"
+            memory: "256Mi"
+          requests:
+            cpu: "50m"
+            memory: "128Mi"
+---
+
+# ========================================================
+# 2. Worker Daemon Deployment
+# ========================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker-daemon
+  namespace: agentos
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: worker-daemon
+  template:
+    metadata:
+      labels:
+        app: worker-daemon
+    spec:
+      containers:
+      - name: worker
+        image: us-central1-docker.pkg.dev/your-project-id/agentos/agentos-core:latest
+        command: ["python", "-m", "execution.worker_daemon"]
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: agentos-secrets
+              key: database-url
+        - name: NATS_URL
+          value: "nats://nats:4222"
+        - name: RUNTIME_TARGET
+          value: "runtime-plane:50054"
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "100m"
+            memory: "256Mi"

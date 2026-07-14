@@ -83,7 +83,8 @@ class gRPCLLMGatewayProxy:
 
 class AgentRuntimeService(pb2_grpc.AgentRuntimeServiceServicer):
     def __init__(self):
-        llm_proxy = gRPCLLMGatewayProxy()
+        cognition_target = os.getenv("COGNITION_TARGET", "localhost:50051")
+        llm_proxy = gRPCLLMGatewayProxy(target=cognition_target)
         # Initialize the local memory engine, but pass the llm_proxy so it calls Cognition Plane for summarization
         memory_engine = MemoryEngine(llm_gateway=llm_proxy)
         tool_runner = ToolRunner()
